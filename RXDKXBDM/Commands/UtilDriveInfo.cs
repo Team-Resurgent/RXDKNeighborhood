@@ -11,9 +11,9 @@ namespace RXDKXBDM.Commands
 {
     public class UtilDriveInfo : Command
     {
-        public async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection)
         {
-            var response = await SendCommandAsync(connection, "getutildrvinfo");
+            var response = await SendCommandAndGetResponseAsync(connection, "getutildrvinfo");
             if (response.IsSuccess())
             {
                 var result = Utils.StringToDictionary(response.ResponseValue);

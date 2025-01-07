@@ -9,7 +9,7 @@ namespace RXDKXBDM.Commands
 {
     public abstract partial class Command
     {
-        internal CommandResponse<string> ParseResponse(string response)
+        internal static CommandResponse<string> ParseResponse(string response)
         {
             if (response.Length < 5 || response[3] != '-')
             {
@@ -25,7 +25,7 @@ namespace RXDKXBDM.Commands
             return new CommandResponse<string>(responseCode, responseString);
         }
 
-        internal async Task<CommandResponse<string>> SendCommandAsync(Connection connection, string command)
+        internal static async Task<CommandResponse<string>> SendCommandAndGetResponseAsync(Connection connection, string command)
         {
             if (await connection.TrySendStringAsync($"{command}\r\n") != ConnectionState.Success)
             {
@@ -39,6 +39,15 @@ namespace RXDKXBDM.Commands
 
             var commandResponse = ParseResponse(response.Item2);
             return commandResponse;
+        }
+
+        internal static async Task<CommandResponse<string>> SendCommandAsync(Connection connection, string command)
+        {
+            if (await connection.TrySendStringAsync($"{command}\r\n") != ConnectionState.Success)
+            {
+                return new CommandResponse<string>((int)ResponseCodes.TrySendStringFailed, string.Empty);
+            }
+            return new CommandResponse<string>(200, string.Empty);
         }
     }
 }

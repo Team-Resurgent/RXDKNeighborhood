@@ -149,16 +149,14 @@ public partial class ConsolePage : ContentPage
 
                 if (Path == string.Empty)
                 {
-                    var utilDriveInfo = new UtilDriveInfo();
-                    var utilDriveInfoResponse = await utilDriveInfo.SendAsync(Globals.GlobalConnection);
+                    var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(Globals.GlobalConnection);
                     if (utilDriveInfoResponse.IsSuccess() == false || utilDriveInfoResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
                     }
 
-                    var driveList = new DriveList();
-                    var driveListResponse = await driveList.SendAsync(Globals.GlobalConnection);
+                    var driveListResponse = await DriveList.SendAsync(Globals.GlobalConnection);
                     if (driveListResponse.IsSuccess() == false || driveListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
@@ -176,8 +174,7 @@ public partial class ConsolePage : ContentPage
                 }
                 else
                 {
-                    var dirList = new DirList();
-                    var dirListResponse = await dirList.SendAsync(Globals.GlobalConnection, Path);
+                    var dirListResponse = await DirList.SendAsync(Globals.GlobalConnection, Path);
                     if (dirListResponse.IsSuccess() == false || dirListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
@@ -365,5 +362,15 @@ public partial class ConsolePage : ContentPage
                 await Shell.Current.GoToAsync(nameof(ConsolePage), parameters);
             }
         }
+    }
+
+    private async void QuickBoot_Clicked(object sender, EventArgs e)
+    {
+        _ = await Reboot.SendAsync(Globals.GlobalConnection, true);
+    }
+
+    private async void Reboot_Clicked(object sender, EventArgs e)
+    {
+        _ = await Reboot.SendAsync(Globals.GlobalConnection, false);
     }
 }

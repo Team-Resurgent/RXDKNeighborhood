@@ -2,6 +2,14 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RXDKNeighborhood.ConsolePage">
+    <ContentPage.MenuBarItems>
+        <MenuBarItem Text="Console Options">
+            <MenuFlyoutSubItem Text="Power">
+                <MenuFlyoutItem Text="Quick Boot" Clicked="QuickBoot_Clicked"/>
+                <MenuFlyoutItem Text="Reboot" Clicked="Reboot_Clicked"/>
+            </MenuFlyoutSubItem>
+        </MenuBarItem>
+    </ContentPage.MenuBarItems>
     <Grid>
         <CollectionView x:Name="DriveCollectionView" SelectionMode="Single">
             <CollectionView.ItemsLayout>

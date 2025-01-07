@@ -10,9 +10,9 @@ namespace RXDKXBDM.Commands
 {
     public class DriveList : Command
     {
-        public async Task<CommandResponse<string[]?>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<string[]?>> SendAsync(Connection connection)
         {
-            var response = await SendCommandAsync(connection, "drivelist");
+            var response = await SendCommandAndGetResponseAsync(connection, "drivelist");
             if (response.IsSuccess())
             {
                 var result = response.ResponseValue.Select(c => c.ToString()).Order().ToArray();

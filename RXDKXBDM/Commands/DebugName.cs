@@ -9,9 +9,9 @@ namespace RXDKXBDM.Commands
 {
     public class DebugName : Command
     {
-        public async Task<CommandResponse<string>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection)
         {
-            return await SendCommandAsync(connection, "dbgname");
+            return await SendCommandAndGetResponseAsync(connection, "dbgname");
         }
     }
 }

@@ -11,7 +11,7 @@ namespace RXDKXBDM.Commands
     {
         public async Task<CommandResponse<string>> SendAsync(Connection connection)
         {
-            return await SendCommandAsync(connection, "xbeinfo running");
+            return await SendCommandAndGetResponseAsync(connection, "xbeinfo running");
         }
     }
 }

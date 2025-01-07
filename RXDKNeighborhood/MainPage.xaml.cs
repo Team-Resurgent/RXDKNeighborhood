@@ -132,8 +132,7 @@ namespace RXDKNeighborhood
                 var connection = new Connection();
                 if (await connection.OpenAsync(input) == true)
                 {
-                    var debugName = new DebugName();
-                    var response = await debugName.SendAsync(connection);
+                    var response = await DebugName.SendAsync(connection);
                     if (response.IsSuccess() == false)
                     {
                         await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
