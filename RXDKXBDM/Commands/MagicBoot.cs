@@ -9,9 +9,9 @@ namespace RXDKXBDM.Commands
 {
     public class MagicBoot : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, string title, bool debug)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path, bool debug)
         {
-            var command = $"magicboot title=\"{title}\"";
+            var command = $"magicboot title=\"{path}\"";
             if (debug) 
             {
                 command += " debug";

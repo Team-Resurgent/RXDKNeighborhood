@@ -1,23 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RXDKXBDM.Commands
 {
-    public class XbeInfo : Command
+    public class DriveFreeSpace : Command
     {
-        public static async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection, string name)
+        public static async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection, string path)
         {
-            string command = $"xbeinfo";
-            if (string.IsNullOrEmpty(name))
-            {
-                command += " running";
-            }
-            var result = new Dictionary<string, string>();
+            var command = $"drivefreespace name=\"{path}\\\"";
             var response = await SendCommandAndGetResponseAsync(connection, command);
+            var result = new List<Dictionary<string, string>>();
             if (response.IsSuccess())
             {
                 return new CommandResponse<IDictionary<string, string>?>(response.ResponseCode, Utils.MultilineResponseToDictionary(response.ResponseValue));

@@ -12,23 +12,13 @@ namespace RXDKXBDM.Commands
     {
         public static async Task<CommandResponse<IDictionary<string, string>[]?>> SendAsync(Connection connection, string path)
         {
-            var result = new List<Dictionary<string, string>>();
             var tempPath = path.EndsWith("\\") ? path : $"{path}\\";
             var command = $"dirlist name=\"{tempPath}\"";
+            var result = new List<Dictionary<string, string>>();
             var response = await SendCommandAndGetResponseAsync(connection, command);
             if (response.IsSuccess())
             {
-                var lines = response.ResponseValue.Split("\r\n");
-                for (int i = 1; i < lines.Length; i++)
-                {
-                    var line = lines[i];
-                    if (line == ".")
-                    {
-                        break;
-                    }
-                    result.Add(Utils.StringToDictionary(line));
-                }
-                return new CommandResponse<IDictionary<string, string>[]?>(response.ResponseCode, [.. result]);
+                return new CommandResponse<IDictionary<string, string>[]?>(response.ResponseCode, Utils.MultilineResponseToDictionaryArray(response.ResponseValue));
             }
             return new CommandResponse<IDictionary<string, string>[]?>(response.ResponseCode, null);
         }

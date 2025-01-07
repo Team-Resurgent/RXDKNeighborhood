@@ -55,20 +55,6 @@ public partial class ConsolePage : ContentPage
         }
     }
 
-    public ulong HexWordsToLong(string hiValue, string loValue)
-    {
-        var hi = Convert.ToUInt32(hiValue, 16);
-        var lo = Convert.ToUInt32(loValue, 16);
-        var result = ((ulong)hi << 32) | (ulong)lo;
-        return result;
-    }
-
-    public string GetDictionaryString(IDictionary<string, string> keyValues, string key)
-    {
-        var result = keyValues.TryGetValue(key, out string? value) ? value : "";
-        return result;
-    }
-
     private string GetUtilityDriveTitle(IDictionary<string, string> utilDriveInfo, string key)
     {
         if (utilDriveInfo.TryGetValue(key, out string? value))
@@ -186,22 +172,11 @@ public partial class ConsolePage : ContentPage
                     {
                         var itemProperties = dirListResponse.ResponseValue[i];
 
-                        var tempName = GetDictionaryString(itemProperties, "name");
-                        var name = tempName.Substring(1, tempName.Length - 2);
+                        var name = Utils.GetDictionaryString(itemProperties, "name");
                         var path = $"{Path}\\{name}";
-
-                        var sizehi = GetDictionaryString(itemProperties, "sizehi");
-                        var sizelo = GetDictionaryString(itemProperties, "sizelo");
-                        var size = HexWordsToLong(sizehi, sizelo);
-
-                        var createhi = GetDictionaryString(itemProperties, "createhi");
-                        var createlo = GetDictionaryString(itemProperties, "createlo");
-                        var create = DateTime.FromFileTime((long)HexWordsToLong(createhi, createlo));
-
-                        var changehi = GetDictionaryString(itemProperties, "changehi");
-                        var changelo = GetDictionaryString(itemProperties, "changelo");
-                        var change = DateTime.FromFileTime((long)HexWordsToLong(changehi, changelo));
-
+                        var size = Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
+                        var create = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "createhi", "createlo"));
+                        var change = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "changehi", "changelo"));
                         var type = itemProperties.ContainsKey("directory") ? DriveItemType.Directory : DriveItemType.File;
                         var imageUrl = itemProperties.ContainsKey("directory") ? "directory.png" : "file.png";
 
@@ -328,12 +303,27 @@ public partial class ConsolePage : ContentPage
                     var argument = commandParameter.Substring(index + 1);
                     if (command == "properties")
                     {
-
+                        if (argument.EndsWith(":"))
+                        {
+                            var response = await DriveFreeSpace.SendAsync(Globals.GlobalConnection, argument);
+                            if (response.IsSuccess() == false)
+                            {
+                                await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                            }
+                        }
+                        else
+                        {
+                            var response = await GetFileAttributes.SendAsync(Globals.GlobalConnection, argument);
+                            if (response.IsSuccess() == false)
+                            {
+                                await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                            }
+                        }
                     }
                     else if (command == "launch")
                     {
-                        var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, argument, true);
-                        if (magicBootResponse.IsSuccess() == false)
+                        var response = await MagicBoot.SendAsync(Globals.GlobalConnection, argument, true);
+                        if (response.IsSuccess() == false)
                         {
                             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                         }
@@ -399,8 +389,7 @@ public partial class ConsolePage : ContentPage
         }
 
         var title = xbeInfoResponse.ResponseValue["name"];
-        title = title.Substring(1, title.Length - 2);
-        var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, xbeInfoResponse.ResponseValue["name"], true);
+        var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, title, true);
         if (magicBootResponse.IsSuccess() == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
