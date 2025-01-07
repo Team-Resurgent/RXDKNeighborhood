@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RXDKNeighborhood.ConsolePage">
+    <Grid>
+        <CollectionView x:Name="DriveCollectionView" SelectionMode="Single">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+        </CollectionView>
+        <Grid x:Name="BusyOverlay" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="True" IsVisible="True" HorizontalOptions="Center" VerticalOptions="CenterAndExpand" />
+        </Grid>
+    </Grid>
+</ContentPage>
