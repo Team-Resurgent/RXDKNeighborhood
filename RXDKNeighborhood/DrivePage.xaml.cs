@@ -315,7 +315,7 @@ public partial class ConsolePage : ContentPage
         DriveCollectionView.ItemsSource = DriveItemsTest;
     }
 
-    private void MenuItem_Clicked(object? sender, EventArgs e)
+    private async void MenuItem_Clicked(object? sender, EventArgs e)
     {
         if (sender != null && sender is MenuFlyoutItem menuItem)
         {
@@ -332,7 +332,11 @@ public partial class ConsolePage : ContentPage
                     }
                     else if (command == "launch")
                     {
-
+                        var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, argument, true);
+                        if (magicBootResponse.IsSuccess() == false)
+                        {
+                            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                        }
                     }
                     else if (command == "delete")
                     {
