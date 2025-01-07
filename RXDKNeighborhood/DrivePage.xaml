@@ -4,10 +4,12 @@
              x:Class="RXDKNeighborhood.ConsolePage">
     <ContentPage.MenuBarItems>
         <MenuBarItem Text="Console Options">
-            <MenuFlyoutSubItem Text="Power">
-                <MenuFlyoutItem Text="Quick Boot" Clicked="QuickBoot_Clicked"/>
-                <MenuFlyoutItem Text="Reboot" Clicked="Reboot_Clicked"/>
+            <MenuFlyoutSubItem Text="Reboot">
+                <MenuFlyoutItem Text="Warm" Clicked="Warm_Clicked"/>
+                <MenuFlyoutItem Text="Warm to Active Title" Clicked="WarmActiveTitle_Clicked"/>
+                <MenuFlyoutItem Text="Cold" Clicked="Cold_Clicked"/>
             </MenuFlyoutSubItem>
+            <MenuFlyoutItem Text="Syncronize Time" Clicked="SyncronizeTime_Clicked"/>
         </MenuBarItem>
     </ContentPage.MenuBarItems>
     <Grid>

@@ -1,0 +1,215 @@
+LPCSTR SzStdResponse(HRESULT hr)
+{
+    LPCSTR pszResp;
+
+    switch(hr) {
+    case XBDM_NOSUCHFILE:
+        pszResp = "file not found";
+        break;
+    case XBDM_NOMODULE:
+        pszResp = "no such module";
+        break;
+    case XBDM_MEMUNMAPPED:
+        pszResp = "memory not mapped";
+        break;
+    case XBDM_NOTHREAD:
+        pszResp = "no such thread";
+        break;
+    case XBDM_INVALIDCMD:
+        pszResp = "unknown command";
+        break;
+    case XBDM_NOTSTOPPED:
+        pszResp = "not stopped";
+        break;
+    case XBDM_MUSTCOPY:
+        pszResp = "file must be copied";
+        break;
+    case XBDM_ALREADYEXISTS:
+        pszResp = "file already exists";
+        break;
+    case XBDM_DIRNOTEMPTY:
+        pszResp = "directory not empty";
+        break;
+    case XBDM_BADFILENAME:
+        pszResp = "filename is invalid";
+        break;
+    case XBDM_CANNOTCREATE:
+        pszResp = "file cannot be created";
+        break;
+    case XBDM_DEVICEFULL:
+        pszResp = "no room on device";
+        break;
+    case XBDM_MULTIRESPONSE:
+        pszResp = "multiline response follows";
+        break;
+    case XBDM_BINRESPONSE:
+        pszResp = "binary response follows";
+        break;
+    case XBDM_READYFORBIN:
+        pszResp = "send binary data";
+        break;
+    case XBDM_CANNOTACCESS:
+        pszResp = "access denied";
+        break;
+    case XBDM_NOTDEBUGGABLE:
+        pszResp = "not debuggable";
+        break;
+    case XBDM_BADCOUNTTYPE:
+        pszResp = "type invalid";
+        break;
+    case XBDM_COUNTUNAVAILABLE:
+        pszResp = "data not available";
+        break;
+    case XBDM_NOTLOCKED:
+        pszResp = "box is not locked";
+        break;
+    case XBDM_KEYXCHG:
+        pszResp = "key exchange required";
+        break;
+    case XBDM_MUSTBEDEDICATED:
+        pszResp = "dedicated connection required";
+        break;
+    case E_OUTOFMEMORY:
+        pszResp = "out of memory";
+        break;
+    case E_UNEXPECTED:
+        pszResp = "unexpected error";
+        break;
+    case E_INVALIDARG:
+        pszResp = "bad parameter";
+        break;
+    case XBDM_NOERR:
+        pszResp = "OK";
+        break;
+    default:
+        pszResp = "";
+        break;
+    }
+    return pszResp;
+}
+
+HRESULT HrFromStatus(NTSTATUS st, HRESULT hrDefault)
+{
+    switch(st) {
+    case STATUS_DIRECTORY_NOT_EMPTY:
+        return XBDM_DIRNOTEMPTY;
+    case STATUS_OBJECT_NAME_COLLISION:
+        return XBDM_ALREADYEXISTS;
+    case STATUS_OBJECT_PATH_NOT_FOUND:
+    case STATUS_OBJECT_NAME_NOT_FOUND:
+        return XBDM_NOSUCHFILE;
+    case STATUS_OBJECT_PATH_INVALID:
+    case STATUS_OBJECT_NAME_INVALID:
+        return XBDM_BADFILENAME;
+    case STATUS_ACCESS_DENIED:
+        return XBDM_CANNOTACCESS;
+    case STATUS_DISK_FULL:
+        return XBDM_DEVICEFULL;
+    case STATUS_INSUFFICIENT_RESOURCES:
+        return E_OUTOFMEMORY;
+    case STATUS_INVALID_HANDLE:
+        return E_INVALIDARG;
+    }
+    return hrDefault;
+}
+
+
+void SendHrSzResp(SOCKET s, HRESULT hr, LPCSTR szResp, LPSTR szBuf)
+{
+    /* Make sure we have an error code we like */
+    if(((hr >> 16) & 0x7fff) != FACILITY_XBDM) {
+        hr = SUCCEEDED(hr) ? XBDM_NOERR : XBDM_UNDEFINED;
+        if(!szResp)
+            szResp = SzStdResponse(E_UNEXPECTED);
+    } else if((hr & 0xffff) > 0xff)
+        hr = XBDM_UNDEFINED;
+
+    if(FAILED(hr))
+        szBuf[0] = '4';
+    else
+        szBuf[0] = '2';
+    szBuf[1] = (char) ('0' + (hr & 0xffff) / 10);   // overflow?
+    szBuf[2] = (char) ('0' + (hr & 0xffff) % 10);
+    szBuf[3] = '-';
+    szBuf[4] = ' ';
+    if(szResp != szBuf) {
+        if(szResp)
+            strcpy(szBuf + 5, szResp);
+        else
+            szBuf[5] = 0;
+    }
+    PrintSockLine(s, szBuf);
+}
+
+{ "adminpw", DMPL_PRIV_MANAGE, HrSetAdminPasswd },
+    { "altaddr", DMPL_PRIV_CONTROL, HrGetAltAddr },
+    { "authuser", 0, HrAuthenticateUser },
+    { "boxid", 0, HrGetBoxId },
+    { "break", DMPL_PRIV_CONTROL, HrDoBreak },
+    { "bye", 0, HrEndConversation, 0, CHH_ANYTHREAD },
+    { "capcontrol", DMPL_PRIV_CONTROL, HrCAPControl },
+    { "continue", DMPL_PRIV_CONTROL, HrContinueThread },
+    { "dbgname", 0, HrSetDbgName },
+    { "debugger", DMPL_PRIV_CONTROL, HrConnectDebugger },
+    { "debugmode", 0, HrSetDebugSecureMode },
+    { "dedicate", 0, HrDedicateConnection, 0, CHH_ANYTHREAD },
+    { "deftitle", DMPL_PRIV_CONTROL, HrSetDefaultTitle },
+    { "delete", 0, HrDeleteFile, DMPL_PRIV_READ | DMPL_PRIV_WRITE },
+    { "dirlist", DMPL_PRIV_READ, HrGetDirList },
+    { "drivefreespace", DMPL_PRIV_READ, HrGetDriveFreeSpace },
+    { "drivelist", DMPL_PRIV_READ, HrGetDriveList },
+    { "dvdblk", DMPL_PRIV_READ, HrGetDvdBlk },
+    { "flash", DMPL_PRIV_CONFIGURE, HrFlashKernelImage },
+    { "fmtfat", DMPL_PRIV_CONFIGURE, HrFormatFAT },
+    { "funccall", DMPL_PRIV_CONTROL, HrFunctionCall },
+    { "getcontext", DMPL_PRIV_CONTROL, HrGetContext },
+    { "getextcontext", DMPL_PRIV_CONTROL, HrGetExtContext },
+    { "getfile", DMPL_PRIV_READ, HrSendFile },
+    { "getfileattributes", DMPL_PRIV_READ | DMPL_PRIV_WRITE, HrGetFileAttributes },
+    { "getmem", DMPL_PRIV_CONTROL, HrGetMemory },
+    { "getuserpriv", 0, HrGetUserPriv },
+    { "go", DMPL_PRIV_CONTROL, HrGo },
+    { "gpucount", DMPL_PRIV_CONTROL, HrToggleGPUCounters },
+    { "halt", DMPL_PRIV_CONTROL, HrHaltThread },
+    { "irtsweep", DMPL_PRIV_CONTROL, HrIrtSweep },
+    { "isbreak", DMPL_PRIV_CONTROL, HrIsBreak },
+    { "isstopped", DMPL_PRIV_CONTROL, HrIsStopped },
+    { "kd", DMPL_PRIV_CONTROL, HrToggleKDState },
+    { "keyxchg", 0, HrKeyExchange },
+    { "lockmode", DMPL_PRIV_MANAGE, HrSetLockMode },
+    { "magicboot", DMPL_PRIV_CONTROL, HrMagicReboot },
+    { "mkdir", DMPL_PRIV_WRITE, HrMkdir },
+    { "mmglobal", DMPL_PRIV_CONTROL, HrGetMmGlobal },
+    { "modlong", DMPL_PRIV_CONTROL, HrDoLongName },
+    { "modsections", DMPL_PRIV_CONTROL, HrListModuleSections },
+    { "modules", DMPL_PRIV_CONTROL, HrListModules },
+    { "nostopon", DMPL_PRIV_CONTROL, HrNostopon },
+    { "notify", DMPL_PRIV_CONTROL, HrSetupNotify },
+    { "notifyat", DMPL_PRIV_CONTROL, HrSetupNotifyAt },
+    { "pclist", DMPL_PRIV_CONTROL, HrListCounters },
+    { "pssnap", DMPL_PRIV_CONTROL, HrPSSnap },
+    { "querypc", DMPL_PRIV_CONTROL, HrQueryPerformanceCounter },
+    { "reboot", DMPL_PRIV_CONTROL, HrReboot },
+    { "rename", 0, HrRenameFile, DMPL_PRIV_READ | DMPL_PRIV_WRITE },
+    { "resume", DMPL_PRIV_CONTROL, HrResumeThread },
+    { "screenshot", DMPL_PRIV_CONTROL, HrScreenshot },
+    { "sendfile", DMPL_PRIV_WRITE, HrReceiveFile },
+    { "setconfig", DMPL_PRIV_CONFIGURE, HrSetConfig },
+    { "setcontext", DMPL_PRIV_CONTROL, HrSetContext },
+    { "setfileattributes", DMPL_PRIV_WRITE, HrSetFileAttributes },
+    { "setmem", DMPL_PRIV_CONTROL, HrSetMemory },
+    { "setsystime", DMPL_PRIV_CONFIGURE, HrSetSystemTime },
+    { "setuserpriv", DMPL_PRIV_MANAGE, HrSetUserPriv },
+    { "stop", DMPL_PRIV_CONTROL, HrStop },
+    { "stopon", DMPL_PRIV_CONTROL, HrStopon },
+    { "suspend", DMPL_PRIV_CONTROL, HrSuspendThread },
+    { "sysfileupd", DMPL_PRIV_CONTROL, HrUpdateSystemFile },
+    { "systime", 0, HrSystemTime },
+    { "threadinfo", DMPL_PRIV_CONTROL, HrThreadInfo },
+    { "threads", DMPL_PRIV_CONTROL, HrListThreads },
+    { "title", DMPL_PRIV_CONTROL, HrSetTitle },
+    { "user", DMPL_PRIV_MANAGE, HrAddUserCommand },
+    { "userlist", DMPL_PRIV_MANAGE, HrListUsers },
+    { "vssnap", DMPL_PRIV_CONTROL, HrVSSnap },
+    { "xbeinfo", DMPL_PRIV_CONTROL, HrXbeInfo },
+    { "xtlinfo", DMPL_PRIV_CONTROL, HrXapiInfo },

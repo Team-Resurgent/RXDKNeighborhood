@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKXBDM", "RXDKXBDM\RXDKXB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKNeighborhood", "RXDKNeighborhood\RXDKNeighborhood.csproj", "{0746237E-0537-442B-AE4C-808BB2A84AD9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0FEBCD2F-0878-420E-B5ED-03463027FF03}"
+	ProjectSection(SolutionItems) = preProject
+		Notes.txt = Notes.txt
+		XBDM commands by version - xboxdevwiki.pdf = XBDM commands by version - xboxdevwiki.pdf
+		Xbox Debug Monitor - xboxdevwiki.pdf = Xbox Debug Monitor - xboxdevwiki.pdf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

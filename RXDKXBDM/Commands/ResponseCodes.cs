@@ -4,10 +4,10 @@
     {
         public enum ResponseCodes
         {
-            ParseResponseInvalidLength = 450,
-            ParseResponseInvalidCode = 451,
-            TrySendStringFailed = 452,
-            TryRecieveString = 453,
+            ParseResponseInvalidLength = 600,
+            ParseResponseInvalidCode = 601,
+            TrySendStringFailed = 602,
+            TryRecieveString = 603,
         }
     }
 }

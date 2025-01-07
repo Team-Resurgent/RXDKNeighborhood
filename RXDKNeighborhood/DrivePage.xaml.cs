@@ -2,6 +2,7 @@ using System.Net;
 using RXDKXBDM.Commands;
 using RXDKNeighborhood.ViewModels;
 using RXDKNeighborhood.Controls;
+using RXDKXBDM;
 
 namespace RXDKNeighborhood;
 
@@ -364,13 +365,61 @@ public partial class ConsolePage : ContentPage
         }
     }
 
-    private async void QuickBoot_Clicked(object sender, EventArgs e)
+    private async void Warm_Clicked(object? sender, EventArgs e)
     {
-        _ = await Reboot.SendAsync(Globals.GlobalConnection, true);
+        var response = await Reboot.SendAsync(Globals.GlobalConnection, true);
+        if (response.IsSuccess() == false)
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            return;
+        }
     }
 
-    private async void Reboot_Clicked(object sender, EventArgs e)
+    private async void WarmActiveTitle_Clicked(object? sender, EventArgs e)
     {
-        _ = await Reboot.SendAsync(Globals.GlobalConnection, false);
+        var xbeInfoResponse = await XbeInfo.SendAsync(Globals.GlobalConnection, "");
+        if (xbeInfoResponse.ResponseCode == 402)
+        {
+            Warm_Clicked(null, new EventArgs());
+        }
+        else if (!xbeInfoResponse.IsSuccess())
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            return;
+        }
+
+        if (xbeInfoResponse.ResponseValue == null || !xbeInfoResponse.ResponseValue.ContainsKey("name"))
+        {
+            await DisplayAlert("Error", "Unexpected response from Xbox.", "Ok");
+            return;
+        }
+
+        var title = xbeInfoResponse.ResponseValue["name"];
+        title = title.Substring(1, title.Length - 2);
+        var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, xbeInfoResponse.ResponseValue["name"], true);
+        if (magicBootResponse.IsSuccess() == false)
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+        }
+    }
+
+    private async void Cold_Clicked(object? sender, EventArgs e)
+    {
+        var response = await Reboot.SendAsync(Globals.GlobalConnection, false);
+        if (response.IsSuccess() == false)
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            return;
+        }
+    }
+
+    private async void SyncronizeTime_Clicked(object? sender, EventArgs e)
+    {
+        var response = await SetSysTime.SendAsync(Globals.GlobalConnection, false);
+        if (response.IsSuccess() == false)
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            return;
+        }
     }
 }
