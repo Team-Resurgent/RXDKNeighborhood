@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Schema;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RXDKXBDM
 {
@@ -87,6 +88,20 @@ namespace RXDKXBDM
             var hi = Convert.ToUInt32(hiValue, 16);
             var lo = Convert.ToUInt32(loValue, 16);
             var result = ((ulong)hi << 32) | (ulong)lo;
+            return result;
+        }
+
+        public static IDictionary<string, string> DateTimeToDictionary(DateTime dateTime)
+        {
+            DateTime fileTimeStart = new DateTime(1601, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var fileTimeTicks = (ulong)(dateTime.ToUniversalTime() - fileTimeStart).Ticks;
+            uint hiValue = (uint)(fileTimeTicks >> 32);
+            uint loValue = (uint)(fileTimeTicks & 0xFFFFFFFF);
+            var result = new Dictionary<string, string>
+            {
+                { "hi", "0x" + hiValue.ToString("x8") },
+                { "lo", "0x" + loValue.ToString("x8") }
+            };
             return result;
         }
 

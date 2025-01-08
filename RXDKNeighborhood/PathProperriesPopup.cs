@@ -2,13 +2,19 @@ using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls.Shapes;
 using RXDKNeighborhood.Controls;
 using RXDKNeighborhood.ViewModels;
+using RXDKXBDM;
+using RXDKXBDM.Commands;
 
 namespace RXDKNeighborhood;
 
 public class PathProperriesPopup : Popup
 {
+    private DriveItem mDriveItem;
+
     public PathProperriesPopup(DriveItem driveItem, string ipAddress)
     {
+        mDriveItem = driveItem;
+
         var isDarkTheme = AppInfo.RequestedTheme == AppTheme.Dark;
 
         var backgroundColor = isDarkTheme ? Color.FromArgb("#1E1E1E") : Color.FromArgb("#F3F3F3");
@@ -67,7 +73,7 @@ public class PathProperriesPopup : Popup
 
         var itemNameLabel = new Label
         {
-            Text = driveItem.Name,
+            Text = mDriveItem.Name,
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -80,7 +86,7 @@ public class PathProperriesPopup : Popup
 
         var itemTypeLabel = new Label
         {
-            Text = (driveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory ? "Directory" : "File",
+            Text = (mDriveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory ? "Directory" : "File",
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -101,7 +107,7 @@ public class PathProperriesPopup : Popup
 
         var locationLabel = new Label
         {
-            Text = driveItem.Path,
+            Text = mDriveItem.Path,
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -114,7 +120,7 @@ public class PathProperriesPopup : Popup
 
         var sizeLabel = new Label
         {
-            Text = driveItem.Size.ToString("N0") + " bytes",
+            Text = mDriveItem.Size.ToString("N0") + " bytes",
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -135,7 +141,7 @@ public class PathProperriesPopup : Popup
 
         var createdLabel = new Label
         {
-            Text = driveItem.Created.ToString("dddd, MMMM dd, yyyy h:mm:ss tt"),
+            Text = mDriveItem.Created.ToString("dddd, MMMM dd, yyyy h:mm:ss tt"),
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -148,7 +154,7 @@ public class PathProperriesPopup : Popup
 
         var modifiedLabel = new Label
         {
-            Text = driveItem.Changed.ToString("dddd, MMMM dd, yyyy h:mm:ss tt"),
+            Text = mDriveItem.Changed.ToString("dddd, MMMM dd, yyyy h:mm:ss tt"),
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -161,9 +167,9 @@ public class PathProperriesPopup : Popup
 
         var readonlyCheckbox = new CheckBox
         {
-            IsChecked = (driveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly,
-            IsEnabled = false
+            IsChecked = (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly,
         };
+        readonlyCheckbox.CheckedChanged += Readonly_CheckedChanged;
 
         var hiddenCaptionLabel = new Label
         {
@@ -173,9 +179,9 @@ public class PathProperriesPopup : Popup
 
         var hiddenCheckbox = new CheckBox
         {
-            IsChecked = (driveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden,
-            IsEnabled = false
+            IsChecked = (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden,
         };
+        hiddenCheckbox.CheckedChanged += Hidden_CheckedChanged;
 
         grid.Add(consoleIpCaptionLabel, 0, 0);
         grid.Add(consoleIpLabel, 1, 0);
@@ -229,5 +235,25 @@ public class PathProperriesPopup : Popup
         };
 
         Content = border;
+    }
+
+    private async void Readonly_CheckedChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.ReadOnly) : (mDriveItem.Flags & ~DriveItemFlag.ReadOnly);
+        var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
+        if (response.IsSuccess() == false)
+        {
+            await AppShell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+        }
+    }
+
+    private async void Hidden_CheckedChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.Hidden) : (mDriveItem.Flags & ~DriveItemFlag.Hidden);
+        var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
+        if (response.IsSuccess() == false)
+        {
+            await AppShell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+        }
     }
 }
