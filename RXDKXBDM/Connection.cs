@@ -19,6 +19,7 @@ namespace RXDKXBDM
         ClientNotOpen,
         SocketError,
     }
+
     public class Connection : IDisposable
     {
         private Socket? mClient = null;
@@ -134,22 +135,28 @@ namespace RXDKXBDM
                 Debug.Print("Error in TrySendString: Client Not Open");
                 return ConnectionState.ClientNotOpen;
             }
-            try
+            int retryCount = 0;
+            while (retryCount < 2)
             {
-                var buffer = Encoding.UTF8.GetBytes(value);
-                var sent = await mClient.SendAsync(buffer, SocketFlags.None);
-                if (sent != buffer.Length)
+                retryCount++;
+                try
                 {
-                    Debug.Print("Error in TrySendString: Unexpected Result");
-                    return ConnectionState.UnexpectedResult;
+                    var buffer = Encoding.UTF8.GetBytes(value);
+                    var sent = await mClient.SendAsync(buffer, SocketFlags.None);
+                    if (sent != buffer.Length)
+                    {
+                        Debug.Print("Error in TrySendString: Unexpected Result");
+                        return ConnectionState.UnexpectedResult;
+                    }
+                    return ConnectionState.Success;
                 }
-                return ConnectionState.Success;
+                catch (Exception ex)
+                {
+                    Debug.Print($"Error in TrySendString: {ex}");
+                    await OpenAsync(mAddress);
+                }
             }
-            catch (Exception ex)
-            {
-                Debug.Print($"Error in TrySendString: {ex}");
-                return ConnectionState.SocketError;
-            }
+            return ConnectionState.SocketError;
         }
 
         private async Task<ConnectionState> TryConnectAsync()
