@@ -51,6 +51,7 @@ namespace RXDKNeighborhood
                 var stackLayout = new TaggedStackLayout
                 {
                     Tag = consoleItem,
+                    WidthRequest = 120,
                     Orientation = StackOrientation.Vertical,
                     HorizontalOptions = LayoutOptions.Center
                 };
@@ -76,6 +77,7 @@ namespace RXDKNeighborhood
                 {
                     HorizontalOptions = LayoutOptions.Center,
                     FontSize = 12,
+                    Margin = new Thickness(0, 0, 0, 10),
                     TextColor = Colors.Gray,
                     Text = consoleItem.Description
                 };

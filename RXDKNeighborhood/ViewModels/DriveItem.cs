@@ -3,15 +3,15 @@ using System.Collections.ObjectModel;
 
 namespace RXDKNeighborhood.ViewModels
 {
-    public enum DriveItemType
+    [Flags]
+    public enum DriveItemFlag
     {
-        Drive,
-        Directory,
-        File
+        File = 1,
+        Directory = 2,
+        ReadOnly = 4,
+        Hidden = 8,
+        Drive = 16
     }
-
-    //name="crashdump.xdmp" sizehi=0x0 sizelo=0x8002000 createhi=0x01c3cc0a createlo=0xc39b9b00 changehi=0x01c3cc0a changelo=0xcbf3d600
-
 
     public class DriveItem
     {
@@ -27,19 +27,28 @@ namespace RXDKNeighborhood.ViewModels
 
         public string ImageUrl { get; set; }
 
-        public DriveItemType Type { get; set; }
+        public DriveItemFlag Flags { get; set; }
 
         public bool HasProerties => true;
 
-        public bool HasDownload => Type != DriveItemType.Drive;
+        public bool HasDownload => (Flags & DriveItemFlag.File) == DriveItemFlag.File || (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
 
-        public bool HasDelete => Type != DriveItemType.Drive;
+        public bool HasDelete => (Flags & DriveItemFlag.File) == DriveItemFlag.File || (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
 
-        public bool HasLaunch => Type == DriveItemType.File && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
+        public bool HasLaunch => (Flags & DriveItemFlag.File) != DriveItemFlag.File && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
+
+        public string CombinePath()
+        {
+            if ((Flags & DriveItemFlag.Drive) == DriveItemFlag.Drive)
+            {
+                return Path;
+            }
+            return System.IO.Path.Combine(Path, Name);
+        }
 
         public DriveItem()
         {
-            Type = DriveItemType.Drive;
+            Flags = DriveItemFlag.Drive;
             Name = string.Empty;
             Path = string.Empty;
             Size = 0;

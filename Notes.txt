@@ -1,3 +1,10 @@
+SendCommand("dmversion");
+SendCommand("delete name=\"" + path + '\"' + (isDirectory ? " dir" : ""));
+SendCommand("mkdir name=\"" + path + "\"");
+SendCommand("rename name=\"" + oldName + "\" newname=\"" + newName + "\"");
+
+
+
 LPCSTR SzStdResponse(HRESULT hr)
 {
     LPCSTR pszResp;

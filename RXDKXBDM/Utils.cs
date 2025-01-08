@@ -55,9 +55,9 @@ namespace RXDKXBDM
             {
                 var part = parts[i] ?? string.Empty;
                 var keyValues = part.Split('=');
+                var key = keyValues[0];
                 if (keyValues.Length == 2)
                 {
-                    var key = keyValues[0];
                     var value = keyValues[1];
                     if (value.StartsWith("\""))
                     {
@@ -65,6 +65,11 @@ namespace RXDKXBDM
                     }
                     result[key] = value;
                 }
+                else
+                {
+                    result[key] = string.Empty;
+                }
+                
             }
             return result;
         }
@@ -78,7 +83,7 @@ namespace RXDKXBDM
         public static ulong GetDictionaryLongFromKeys(IDictionary<string, string> keyValues, string hiKey, string loKey)
         {
             var hiValue = GetDictionaryString(keyValues, hiKey);
-            var loValue = GetDictionaryString(keyValues, hiKey);
+            var loValue = GetDictionaryString(keyValues, loKey);
             var hi = Convert.ToUInt32(hiValue, 16);
             var lo = Convert.ToUInt32(loValue, 16);
             var result = ((ulong)hi << 32) | (ulong)lo;
