@@ -352,11 +352,18 @@ public partial class ConsolePage : ContentPage
                     }
                     else if (command == "delete")
                     {
+                        await DisplayAlert("Error", "Delete not implemented yet.", "Ok");
                     }
                     else if (command == "download")
                     {
                         try
                         {
+                            if ((driveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory)
+                            {
+                                await DisplayAlert("Error", "Directory not implemented yet.", "Ok");
+                                return;
+                            }
+
                             var cancellationToken = new CancellationToken();
                             var result = await FolderPicker.Default.PickAsync(cancellationToken);
                             if (result.IsSuccessful == false)
