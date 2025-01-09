@@ -6,56 +6,30 @@ namespace RXDKNeighborhood
 {
     public class DownloadStream : ExpectedSizeStream
     {
-        private string mFilename;
-        private Stream? mStream;
+        private Stream mStream;
         private long mExpectedSize;
-        private Action<long, long>? mProgress;
-        private bool mDisposed;
-        private Stopwatch mLastUpdate;
-
-        protected override void Dispose(bool disposing)
-        {
-            if (mDisposed)
-            {
-                return;
-            }
-
-            mStream?.Dispose();
-       
-            base.Dispose(disposing);
-            mDisposed = true;
-        }
 
         public override long ExpectedSize { get { return mExpectedSize; } }
 
-        public override bool CanRead => false;
+        public override bool CanRead => mStream.CanRead;
 
-        public override bool CanSeek => false;
+        public override bool CanSeek => mStream.CanSeek;
 
-        public override bool CanWrite => true;
+        public override bool CanWrite => mStream.CanWrite;
 
-        public override long Length => mStream?.Length ?? 0;
+        public override long Length => mStream.Length;
 
-        public override long Position 
-        { 
+        public override long Position
+        {
             get => mStream?.Position ?? 0;
-            set
-            {
-                if (mStream != null)
-                {
-                    mStream.Position = value;
-                }
-            }
+            set =>  mStream.Position = value;
         }
 
-        public DownloadStream(string filename, Action<long, long>? progress)
+        public DownloadStream(Stream stream)
         {
-            mFilename = filename;
-            mStream = null;
+            mStream = stream;
             mExpectedSize = 0;
-            mProgress = progress;
             mDisposed = false;
-            mLastUpdate = Stopwatch.StartNew();
         }
 
         public override void Flush()
@@ -94,20 +68,7 @@ namespace RXDKNeighborhood
                 offset += 4;
                 count -= 4;
             }
-            if (mStream == null)
-            {
-                mStream = new FileStream(mFilename, FileMode.Create);
-            }
             mStream.Write(buffer, offset, count);
-
-            //if (mLastUpdate.ElapsedMilliseconds < 1000)
-            //{
-            //    return;
-            //}
-
-            Debug.Print($"{mStream.Length} of {mExpectedSize}");
-            //mProgress.Invoke(mStream.Length, mExpectedSize);
-           // mLastUpdate.Restart();
         }
     }
 }

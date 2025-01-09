@@ -31,9 +31,9 @@ public partial class ConsolePage : ContentPage
         SizeChanged += OnSizeChanged;
     }
 
-    private void ShowBusy(string caption)
+    private void ShowBusy(string? caption = null)
     {
-        BusyStatus.Text = caption;
+        BusyStatus.Text = caption ?? "Please wait...";
         BusyOverlay.IsVisible = true;
         BusyIndicator.IsRunning = true;
     }
@@ -50,7 +50,7 @@ public partial class ConsolePage : ContentPage
 
         if (HasLoaded == false)
         {
-            ShowBusy("Please wait...");
+            ShowBusy();
 
             var connected = await ConnectToXboxAsync();
             if (connected == false)
@@ -386,55 +386,47 @@ public partial class ConsolePage : ContentPage
                                 return;
                             }
 
-                            ShowBusy("Please wait...");
+                            ShowBusy();
 
                             bool errorOccured = await Task.Run(() =>
                             {
                                 bool errorOccured = false;
-
-                                var progress = new Action<long, long>((step, total) =>
+                                using (var fileStream = new FileStream(filename, FileMode.Create))
+                                using (var downloadStream = new DownloadStream(fileStream))
                                 {
-                                    Dispatcher.Dispatch(() =>
+                                    var timer = new System.Timers.Timer(100);
+                                    timer.Elapsed += (sender, e) =>
                                     {
-                                        BusyStatus.Text = $"Downloading {step} of {total}";
-                                    });
-                                });
+                                        Dispatcher.Dispatch(() =>
+                                        {
+                                            BusyStatus.Text = $"Downloading {downloadStream.Position} of {downloadStream.ExpectedSize}";
+                                        });
+                                    };
+                                    timer.AutoReset = true;
+                                    timer.Start();
 
-                                using var downloadStream = new DownloadStream(filename, progress);
+                                    var response = Download.SendAsync(Globals.GlobalConnection, argument, downloadStream).Result;
 
-                                var timer = new  System.Timers.Timer(100);
-                                timer.Elapsed += (sender, e) =>
-                                {
-                                    Dispatcher.Dispatch(() =>
+                                    timer.Stop();
+
+                                    if (downloadStream.ExpectedSize != downloadStream.Length)
                                     {
-                                        BusyStatus.Text = $"Downloading {downloadStream.Position} of {downloadStream.ExpectedSize}";
-                                    });
-                                };
-                                timer.AutoReset = true; 
-                                timer.Start();
+                                        errorOccured = true;
+                                        Dispatcher.Dispatch(async () =>
+                                        {
+                                            await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
+                                        });
+                                    }
 
-                                var response = Download.SendAsync(Globals.GlobalConnection, argument, downloadStream).Result;
-
-                                timer.Stop();
-
-                                if (downloadStream.ExpectedSize != downloadStream.Length)
-                                {
-                                    errorOccured = true;
-                                    Dispatcher.Dispatch(async () =>
+                                    if (Utils.IsSuccess(response.ResponseCode) == false)
                                     {
-                                        await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
-                                    });
+                                        errorOccured = true;
+                                        Dispatcher.Dispatch(async () =>
+                                        {
+                                            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                                        });
+                                    }
                                 }
-
-                                if (Utils.IsSuccess(response.ResponseCode) == false)
-                                {
-                                    errorOccured = true;
-                                    Dispatcher.Dispatch(async () =>
-                                    {
-                                        await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
-                                    });
-                                }
-
                                 return errorOccured;
                             });
 
