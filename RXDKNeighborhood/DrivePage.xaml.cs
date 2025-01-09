@@ -5,6 +5,10 @@ using RXDKNeighborhood.Controls;
 using RXDKXBDM;
 using CommunityToolkit.Maui.Views;
 using System.IO;
+using CommunityToolkit.Maui.Storage;
+using System.Threading;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 
 namespace RXDKNeighborhood;
 
@@ -351,6 +355,41 @@ public partial class ConsolePage : ContentPage
                     }
                     else if (command == "download")
                     {
+                        try
+                        {
+                            var cancellationToken = new CancellationToken();
+                            var result = await FolderPicker.Default.PickAsync(cancellationToken);
+                            if (result.IsSuccessful == false)
+                            {
+                                return;
+                            }
+
+                            var filename = System.IO.Path.Combine(result.Folder.Path, driveItem.Name);
+                            if (File.Exists(filename))
+                            {
+                                bool answer = await DisplayAlert("File Save", $"File '{filename}' exists.\r\nDo you want to overwrite?", "Yes", "No");
+                                if (answer == false)
+                                {
+                                    return;
+                                }
+                            }
+
+                            using var fileStream = new FileStream(filename, FileMode.Create);
+                            using var downloadStream = new DownloadStream(fileStream);
+                            var response = await Download.SendAsync(Globals.GlobalConnection, argument, downloadStream);
+                            if (Utils.IsSuccess(response.ResponseCode) == false)
+                            {
+                                await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                            }
+                            if (downloadStream.ExpectedSize != downloadStream.Length)
+                            {
+                                await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await DisplayAlert("Error", "Failed to save file.", "Ok");
+                        }
                     }
                 }
             }
@@ -431,13 +470,14 @@ public partial class ConsolePage : ContentPage
         }
     }
 
-    private async void Screenshot_Clicked(object? sender, EventArgs e)
+    private void Screenshot_Clicked(object? sender, EventArgs e)
     {
-        var response = await RXDKXBDM.Commands.Screenshot.SendAsync(Globals.GlobalConnection);
-        if (Utils.IsSuccess(response.ResponseCode) == false)
-        {
-            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
-            return;
-        }
+        //using var outputStream = new FileStream("C:\\download.xbe", FileMode.CreateNew);
+        //var response = await RXDKXBDM.Commands.Screenshot.SendAsync(Globals.GlobalConnection, outputStream);
+        //if (Utils.IsSuccess(response.ResponseCode) == false)
+        //{
+        //    await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+        //    return;
+        //}
     }
 }

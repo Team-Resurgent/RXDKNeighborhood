@@ -49,7 +49,8 @@
         ClientNotOpen,
         Timeout,
         UnexpectedResult,
-        SocketError
+        SocketError,
+        BadArgument
     }
    
 }

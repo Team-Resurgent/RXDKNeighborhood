@@ -9,13 +9,13 @@ namespace RXDKXBDM.Commands
 {
     public abstract partial class Command
     {
-        internal static async Task<SocketResponse> SendCommandAndGetResponseAsync(Connection connection, string command)
+        internal static async Task<SocketResponse> SendCommandAndGetResponseAsync(Connection connection, string command, ExpectedSizeStream? binaryResponseStream = null)
         {
             if (await connection.TrySendStringAsync($"{command}\r\n") != ConnectionState.Success)
             {
                 return new SocketResponse { ResponseCode = ResponseCode.TrySendStringFailed, Response = "SendCommandAndGetResponseAsync TrySendStringAsync Failed" };
             }
-            var response = await connection.TryRecieveStringAsync();
+            var response = await connection.TryRecieveBodyAsync(binaryResponseStream);
             return response;
         }
 

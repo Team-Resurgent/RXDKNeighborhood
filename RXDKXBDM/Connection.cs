@@ -110,7 +110,7 @@ namespace RXDKXBDM
             return stringBuilder.ToString();
         }
 
-        public async Task<SocketResponse> TryRecieveStringAsync()
+        public async Task<SocketResponse> TryRecieveBodyAsync(ExpectedSizeStream? binaryResponseStream = null)
         {
             if (mClient == null)
             {
@@ -125,14 +125,14 @@ namespace RXDKXBDM
              
                 var readBuffer = new byte[1024];
 
-                var bytesRead = await mClient.ReceiveAsync(readBuffer);
-                if (bytesRead < 5)
+                var initialBytesRead = await mClient.ReceiveAsync(readBuffer);
+                if (initialBytesRead < 5)
                 {
                     return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
                 }
 
-                var position = 0;
-                var header = ExtractLine(ref readBuffer, bytesRead, ref position);
+                var initialPosition = 0;
+                var header = ExtractLine(ref readBuffer, initialBytesRead, ref initialPosition);
                 if (header.Substring(3, 2).Equals("- ") == false || int.TryParse(header.AsSpan(0, 3), out var responseCodeInt) == false)
                 {
                     return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
@@ -149,7 +149,7 @@ namespace RXDKXBDM
                 if (responseCode == ResponseCode.XBDM_SUCCESS_MULTIRESPONSE)
                 {
                     using var stream = new MemoryStream();
-                    stream.Write(readBuffer, position, bytesRead - position);
+                    stream.Write(readBuffer, initialPosition, initialBytesRead - initialPosition);
                     while (mClient.Available > 0)
                     {
                         var bytesRead2 = await mClient.ReceiveAsync(readBuffer);
@@ -171,6 +171,32 @@ namespace RXDKXBDM
 
                     socketResponse.Body = body.ToArray();
                     return socketResponse;
+                }
+
+                if (responseCode == ResponseCode.XBDM_SUCCESS_BINRESPONSE)
+                {
+                    if (binaryResponseStream == null)
+                    {
+                        return new SocketResponse { ResponseCode = ResponseCode.BadArgument, Response = "Binary response stream not provided" };
+                    }
+
+                    binaryResponseStream.Write(readBuffer, initialPosition, initialBytesRead - initialPosition);
+                    var expectedSize = binaryResponseStream.ExpectedSize;
+
+                    while (binaryResponseStream.Length != expectedSize)
+                    {
+                        while (mClient.Available > 0)
+                        {
+                            var bytesRead2 = await mClient.ReceiveAsync(readBuffer);
+                            binaryResponseStream.Write(readBuffer, 0, bytesRead2);
+                        }
+                        if (binaryResponseStream.Length == expectedSize || WaitAvailable() == false)
+                        {
+                            break;
+                        }
+                    }
+
+                    return new SocketResponse { ResponseCode = ResponseCode.XBDM_SUCCESS_OK, Response = "OK" };
                 }
 
                 return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
@@ -222,7 +248,7 @@ namespace RXDKXBDM
             try
             {
                 await mClient.ConnectAsync(IPAddress.Parse(mAddress), 731);
-                var response = await TryRecieveStringAsync();
+                var response = await TryRecieveBodyAsync();
                 if (response.ResponseCode != ResponseCode.XBDM_SUCCESS_CONNECTED)
                 { 
                     Debug.Print("Error in TrySendString: Unexpected Result");

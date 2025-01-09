@@ -19,7 +19,7 @@ namespace RXDKXBDM
         public static IDictionary<string, string> BodyToDictionary(string[] body)
         {
             var result = new Dictionary<string, string>();
-            for (int i = 1; i < body.Length; i++)
+            for (int i = 0; i < body.Length; i++)
             {
                 var line = body[i];
                 var temp = StringToDictionary(line);
@@ -36,7 +36,7 @@ namespace RXDKXBDM
         public static IDictionary<string, string>[] BodyToDictionaryArray(string[] body)
         {
             var result = new List<Dictionary<string, string>>();
-            for (int i = 1; i < body.Length; i++)
+            for (int i = 0; i < body.Length; i++)
             {
                 var line = body[i];
                 result.Add(StringToDictionary(line));
@@ -81,8 +81,14 @@ namespace RXDKXBDM
         {
             var hiValue = GetDictionaryString(keyValues, hiKey);
             var loValue = GetDictionaryString(keyValues, loKey);
-            var hi = Convert.ToUInt32(hiValue, 16);
-            var lo = Convert.ToUInt32(loValue, 16);
+            if (uint.TryParse(hiValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var hi) == false)
+            {
+                return 0;
+            }
+            if (uint.TryParse(loValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var lo) == false)
+            {
+                return 0;
+            }
             var result = ((ulong)hi << 32) | (ulong)lo;
             return result;
         }
