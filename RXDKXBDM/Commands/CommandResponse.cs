@@ -1,6 +1,4 @@
-﻿using static RXDKXBDM.Commands.Command;
-
-namespace RXDKXBDM.Commands
+﻿namespace RXDKXBDM.Commands
 {
     public class SocketResponse
     {
@@ -12,7 +10,7 @@ namespace RXDKXBDM.Commands
 
         public SocketResponse()
         {
-            ResponseCode = ResponseCode.XBDM_SUCCESS_OK;
+            ResponseCode = ResponseCode.SUCCESS_OK;
             Response = string.Empty;;
             Body = [];
         }

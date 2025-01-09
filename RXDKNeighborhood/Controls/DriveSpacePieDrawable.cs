@@ -1,7 +1,4 @@
-﻿using Microsoft.Maui.Controls;
-using Microsoft.Maui.Graphics;
-
-namespace RXDKNeighborhood.Controls
+﻿namespace RXDKNeighborhood.Controls
 {
     public class DriveSpacePieDrawable : IDrawable
     {

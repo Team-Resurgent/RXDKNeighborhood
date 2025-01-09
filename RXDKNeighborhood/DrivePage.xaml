@@ -20,7 +20,10 @@
             </CollectionView.ItemsLayout>
         </CollectionView>
         <Grid x:Name="BusyOverlay" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
-            <ActivityIndicator x:Name="BusyIndicator" IsRunning="True" IsVisible="True" HorizontalOptions="Center" VerticalOptions="CenterAndExpand" />
+            <StackLayout HorizontalOptions="Center" VerticalOptions="CenterAndExpand">
+                <ActivityIndicator x:Name="BusyIndicator" IsRunning="True" IsVisible="True" HorizontalOptions="Center" />
+                <Label x:Name="BusyStatus" Text="Please Wait..." HorizontalOptions="Center" />
+            </StackLayout>
         </Grid>
     </Grid>
 </ContentPage>

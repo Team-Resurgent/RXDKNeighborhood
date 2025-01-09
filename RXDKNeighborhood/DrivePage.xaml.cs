@@ -4,11 +4,10 @@ using RXDKNeighborhood.ViewModels;
 using RXDKNeighborhood.Controls;
 using RXDKXBDM;
 using CommunityToolkit.Maui.Views;
-using System.IO;
 using CommunityToolkit.Maui.Storage;
-using System.Threading;
-using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
+using Windows.Storage.Pickers;
+using Microsoft.Maui;
+using System.Diagnostics;
 
 namespace RXDKNeighborhood;
 
@@ -32,22 +31,37 @@ public partial class ConsolePage : ContentPage
         SizeChanged += OnSizeChanged;
     }
 
+    private void ShowBusy(string caption)
+    {
+        BusyStatus.Text = caption;
+        BusyOverlay.IsVisible = true;
+        BusyIndicator.IsRunning = true;
+    }
+
+    private void HideBusy()
+    {
+        BusyOverlay.IsVisible = false;
+        BusyIndicator.IsRunning = false;
+    }
+
     protected override async void OnNavigatedTo(NavigatedToEventArgs e)
     {
         base.OnNavigatedTo(e);
 
         if (HasLoaded == false)
         {
+            ShowBusy("Please wait...");
+
             var connected = await ConnectToXboxAsync();
             if (connected == false)
             {
                 await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                 await Shell.Current.GoToAsync("..");
+                HideBusy();
                 return;
             }
             HasLoaded = true;
-            BusyOverlay.IsVisible = false;
-            BusyIndicator.IsRunning = false;
+            HideBusy();
         }
     }
 
@@ -358,43 +372,86 @@ public partial class ConsolePage : ContentPage
                     {
                         try
                         {
+
+
                             if ((driveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory)
                             {
                                 await DisplayAlert("Error", "Directory not implemented yet.", "Ok");
                                 return;
                             }
 
-                            var cancellationToken = new CancellationToken();
-                            var result = await FolderPicker.Default.PickAsync(cancellationToken);
-                            if (result.IsSuccessful == false)
+                            var filename = await FileUtils.FilePicker(Window, driveItem.Name);
+                            if (filename == null)
                             {
                                 return;
                             }
 
-                            var filename = System.IO.Path.Combine(result.Folder.Path, driveItem.Name);
-                            if (File.Exists(filename))
+                            ShowBusy("Please wait...");
+
+                            bool errorOccured = await Task.Run(() =>
                             {
-                                bool answer = await DisplayAlert("File Save", $"File '{filename}' exists.\r\nDo you want to overwrite?", "Yes", "No");
-                                if (answer == false)
+                                bool errorOccured = false;
+
+                                var progress = new Action<long, long>((step, total) =>
                                 {
-                                    return;
+                                    Dispatcher.Dispatch(() =>
+                                    {
+                                        BusyStatus.Text = $"Downloading {step} of {total}";
+                                    });
+                                });
+
+                                using var downloadStream = new DownloadStream(filename, progress);
+
+                                var timer = new  System.Timers.Timer(100);
+                                timer.Elapsed += (sender, e) =>
+                                {
+                                    Dispatcher.Dispatch(() =>
+                                    {
+                                        BusyStatus.Text = $"Downloading {downloadStream.Position} of {downloadStream.ExpectedSize}";
+                                    });
+                                };
+                                timer.AutoReset = true; 
+                                timer.Start();
+
+                                var response = Download.SendAsync(Globals.GlobalConnection, argument, downloadStream).Result;
+
+                                timer.Stop();
+
+                                if (downloadStream.ExpectedSize != downloadStream.Length)
+                                {
+                                    errorOccured = true;
+                                    Dispatcher.Dispatch(async () =>
+                                    {
+                                        await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
+                                    });
+                                }
+
+                                if (Utils.IsSuccess(response.ResponseCode) == false)
+                                {
+                                    errorOccured = true;
+                                    Dispatcher.Dispatch(async () =>
+                                    {
+                                        await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+                                    });
+                                }
+
+                                return errorOccured;
+                            });
+
+                            if (errorOccured == true)
+                            {
+                                if (File.Exists(filename))
+                                {
+                                    File.Delete(filename);
                                 }
                             }
 
-                            using var fileStream = new FileStream(filename, FileMode.Create);
-                            using var downloadStream = new DownloadStream(fileStream);
-                            var response = await Download.SendAsync(Globals.GlobalConnection, argument, downloadStream);
-                            if (Utils.IsSuccess(response.ResponseCode) == false)
-                            {
-                                await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
-                            }
-                            if (downloadStream.ExpectedSize != downloadStream.Length)
-                            {
-                                await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
-                            }
+                            HideBusy();
+
                         }
                         catch (Exception ex)
                         {
+                            System.Diagnostics.Debug.WriteLine(ex.ToString());
                             await DisplayAlert("Error", "Failed to save file.", "Ok");
                         }
                     }
@@ -433,7 +490,7 @@ public partial class ConsolePage : ContentPage
     private async void WarmActiveTitle_Clicked(object? sender, EventArgs e)
     {
         var xbeInfoResponse = await XbeInfo.SendAsync(Globals.GlobalConnection, "");
-        if (xbeInfoResponse.ResponseCode == ResponseCode.XBDM_ERROR_NOSUCHFILE)
+        if (xbeInfoResponse.ResponseCode == ResponseCode.ERROR_NOSUCHFILE)
         {
             Warm_Clicked(null, new EventArgs());
         }

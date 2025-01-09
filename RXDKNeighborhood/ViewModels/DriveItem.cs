@@ -1,7 +1,4 @@
-﻿using RXDKXBDM;
-using System.Collections.ObjectModel;
-
-namespace RXDKNeighborhood.ViewModels
+﻿namespace RXDKNeighborhood.ViewModels
 {
     [Flags]
     public enum DriveItemFlag

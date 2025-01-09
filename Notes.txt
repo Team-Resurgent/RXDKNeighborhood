@@ -10,70 +10,70 @@ LPCSTR SzStdResponse(HRESULT hr)
     LPCSTR pszResp;
 
     switch(hr) {
-    case XBDM_NOSUCHFILE:
+    case NOSUCHFILE:
         pszResp = "file not found";
         break;
-    case XBDM_NOMODULE:
+    case NOMODULE:
         pszResp = "no such module";
         break;
-    case XBDM_MEMUNMAPPED:
+    case MEMUNMAPPED:
         pszResp = "memory not mapped";
         break;
-    case XBDM_NOTHREAD:
+    case NOTHREAD:
         pszResp = "no such thread";
         break;
-    case XBDM_INVALIDCMD:
+    case INVALIDCMD:
         pszResp = "unknown command";
         break;
-    case XBDM_NOTSTOPPED:
+    case NOTSTOPPED:
         pszResp = "not stopped";
         break;
-    case XBDM_MUSTCOPY:
+    case MUSTCOPY:
         pszResp = "file must be copied";
         break;
-    case XBDM_ALREADYEXISTS:
+    case ALREADYEXISTS:
         pszResp = "file already exists";
         break;
-    case XBDM_DIRNOTEMPTY:
+    case DIRNOTEMPTY:
         pszResp = "directory not empty";
         break;
-    case XBDM_BADFILENAME:
+    case BADFILENAME:
         pszResp = "filename is invalid";
         break;
-    case XBDM_CANNOTCREATE:
+    case CANNOTCREATE:
         pszResp = "file cannot be created";
         break;
-    case XBDM_DEVICEFULL:
+    case DEVICEFULL:
         pszResp = "no room on device";
         break;
-    case XBDM_MULTIRESPONSE:
+    case MULTIRESPONSE:
         pszResp = "multiline response follows";
         break;
-    case XBDM_BINRESPONSE:
+    case BINRESPONSE:
         pszResp = "binary response follows";
         break;
-    case XBDM_READYFORBIN:
+    case READYFORBIN:
         pszResp = "send binary data";
         break;
-    case XBDM_CANNOTACCESS:
+    case CANNOTACCESS:
         pszResp = "access denied";
         break;
-    case XBDM_NOTDEBUGGABLE:
+    case NOTDEBUGGABLE:
         pszResp = "not debuggable";
         break;
-    case XBDM_BADCOUNTTYPE:
+    case BADCOUNTTYPE:
         pszResp = "type invalid";
         break;
-    case XBDM_COUNTUNAVAILABLE:
+    case COUNTUNAVAILABLE:
         pszResp = "data not available";
         break;
-    case XBDM_NOTLOCKED:
+    case NOTLOCKED:
         pszResp = "box is not locked";
         break;
-    case XBDM_KEYXCHG:
+    case KEYXCHG:
         pszResp = "key exchange required";
         break;
-    case XBDM_MUSTBEDEDICATED:
+    case MUSTBEDEDICATED:
         pszResp = "dedicated connection required";
         break;
     case E_OUTOFMEMORY:
@@ -85,7 +85,7 @@ LPCSTR SzStdResponse(HRESULT hr)
     case E_INVALIDARG:
         pszResp = "bad parameter";
         break;
-    case XBDM_NOERR:
+    case NOERR:
         pszResp = "OK";
         break;
     default:
@@ -99,19 +99,19 @@ HRESULT HrFromStatus(NTSTATUS st, HRESULT hrDefault)
 {
     switch(st) {
     case STATUS_DIRECTORY_NOT_EMPTY:
-        return XBDM_DIRNOTEMPTY;
+        return DIRNOTEMPTY;
     case STATUS_OBJECT_NAME_COLLISION:
-        return XBDM_ALREADYEXISTS;
+        return ALREADYEXISTS;
     case STATUS_OBJECT_PATH_NOT_FOUND:
     case STATUS_OBJECT_NAME_NOT_FOUND:
-        return XBDM_NOSUCHFILE;
+        return NOSUCHFILE;
     case STATUS_OBJECT_PATH_INVALID:
     case STATUS_OBJECT_NAME_INVALID:
-        return XBDM_BADFILENAME;
+        return BADFILENAME;
     case STATUS_ACCESS_DENIED:
-        return XBDM_CANNOTACCESS;
+        return CANNOTACCESS;
     case STATUS_DISK_FULL:
-        return XBDM_DEVICEFULL;
+        return DEVICEFULL;
     case STATUS_INSUFFICIENT_RESOURCES:
         return E_OUTOFMEMORY;
     case STATUS_INVALID_HANDLE:
@@ -125,11 +125,11 @@ void SendHrSzResp(SOCKET s, HRESULT hr, LPCSTR szResp, LPSTR szBuf)
 {
     /* Make sure we have an error code we like */
     if(((hr >> 16) & 0x7fff) != FACILITY_XBDM) {
-        hr = SUCCEEDED(hr) ? XBDM_NOERR : XBDM_UNDEFINED;
+        hr = SUCCEEDED(hr) ? NOERR : UNDEFINED;
         if(!szResp)
             szResp = SzStdResponse(E_UNEXPECTED);
     } else if((hr & 0xffff) > 0xff)
-        hr = XBDM_UNDEFINED;
+        hr = UNDEFINED;
 
     if(FAILED(hr))
         szBuf[0] = '4';

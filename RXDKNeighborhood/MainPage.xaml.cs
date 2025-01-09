@@ -1,11 +1,9 @@
 ﻿using RXDKNeighborhood.ViewModels;
 using RXDKNeighborhood.Models;
-using System.Collections.ObjectModel;
 using RXDKXBDM;
 using RXDKXBDM.Commands;
 using System.Net;
 using RXDKNeighborhood.Controls;
-using Microsoft.Maui.Graphics.Text;
 
 namespace RXDKNeighborhood
 {

@@ -1,11 +1,4 @@
 ﻿using RXDKXBDM.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RXDKXBDM
 {
@@ -81,11 +74,11 @@ namespace RXDKXBDM
         {
             var hiValue = GetDictionaryString(keyValues, hiKey);
             var loValue = GetDictionaryString(keyValues, loKey);
-            if (uint.TryParse(hiValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var hi) == false)
+            if (string.IsNullOrEmpty(hiValue) || uint.TryParse(hiValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var hi) == false)
             {
                 return 0;
             }
-            if (uint.TryParse(loValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var lo) == false)
+            if (string.IsNullOrEmpty(loValue) || uint.TryParse(loValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var lo) == false)
             {
                 return 0;
             }

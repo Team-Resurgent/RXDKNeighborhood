@@ -1,6 +1,5 @@
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls.Shapes;
-using RXDKNeighborhood.Controls;
 using RXDKNeighborhood.ViewModels;
 using RXDKXBDM;
 using RXDKXBDM.Commands;
@@ -243,7 +242,7 @@ public class PathProperriesPopup : Popup
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
         if (Utils.IsSuccess(response.ResponseCode) == false)
         {
-            await AppShell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            await Shell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }
     }
 
@@ -253,7 +252,7 @@ public class PathProperriesPopup : Popup
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
         if (Utils.IsSuccess(response.ResponseCode) == false)
         {
-            await AppShell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            await Shell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }
     }
 }
