@@ -35,7 +35,7 @@ namespace RXDKNeighborhood.ViewModels
 
         public bool HasDelete => (Flags & DriveItemFlag.File) == DriveItemFlag.File || (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
 
-        public bool HasLaunch => (Flags & DriveItemFlag.File) != DriveItemFlag.File && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
+        public bool HasLaunch => (Flags & DriveItemFlag.File) == DriveItemFlag.File && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
 
         public string CombinePath()
         {

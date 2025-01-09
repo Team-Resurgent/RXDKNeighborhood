@@ -16,7 +16,7 @@ namespace RXDKXBDM.Commands
             {
                 command += " warm";
             }
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var socketResponse = await SendCommandAsync(connection, command);
             return socketResponse.ResponseCode;
         }
     }
