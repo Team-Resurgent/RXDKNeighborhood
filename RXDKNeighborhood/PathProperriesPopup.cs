@@ -240,7 +240,7 @@ public class PathProperriesPopup : Popup
     {
         mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.ReadOnly) : (mDriveItem.Flags & ~DriveItemFlag.ReadOnly);
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
-        if (Utils.IsSuccess(response.ResponseCode) == false)
+        if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
         {
             await Shell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }
@@ -250,7 +250,7 @@ public class PathProperriesPopup : Popup
     {
         mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.Hidden) : (mDriveItem.Flags & ~DriveItemFlag.Hidden);
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
-        if (Utils.IsSuccess(response.ResponseCode) == false)
+        if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
         {
             await Shell.Current.DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }

@@ -8,8 +8,24 @@ using Windows.Storage.Pickers;
 
 namespace RXDKNeighborhood
 {
-    public static class FileUtils
+    public static class Utils
     {
+        public static string FormatBytes(long bytes)
+        {
+            const long KB = 1024;
+            const long MB = KB * 1024;
+            const long GB = MB * 1024;
+
+            if (bytes >= GB)
+                return $"{(double)bytes / GB:0.##} GB";
+            if (bytes >= MB)
+                return $"{(double)bytes / MB:0.##} MB";
+            if (bytes >= KB)
+                return $"{(double)bytes / KB:0.##} KB";
+
+            return $"{bytes} bytes";
+        }
+
         public static async Task<string?> FilePicker(Window window, string name)
         {
             var extension = System.IO.Path.GetExtension(name);

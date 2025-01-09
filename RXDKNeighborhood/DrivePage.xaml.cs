@@ -157,14 +157,14 @@ public partial class ConsolePage : ContentPage
                 if (Path == string.Empty)
                 {
                     var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(Globals.GlobalConnection);
-                    if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
+                    if (RXDKXBDM.Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
                     }
 
                     var driveListResponse = await DriveList.SendAsync(Globals.GlobalConnection);
-                    if (Utils.IsSuccess(driveListResponse.ResponseCode) == false || driveListResponse.ResponseValue == null)
+                    if (RXDKXBDM.Utils.IsSuccess(driveListResponse.ResponseCode) == false || driveListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
@@ -182,7 +182,7 @@ public partial class ConsolePage : ContentPage
                 else
                 {
                     var dirListResponse = await DirList.SendAsync(Globals.GlobalConnection, Path);
-                    if (Utils.IsSuccess(dirListResponse.ResponseCode) == false || dirListResponse.ResponseValue == null)
+                    if (RXDKXBDM.Utils.IsSuccess(dirListResponse.ResponseCode) == false || dirListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
@@ -192,11 +192,11 @@ public partial class ConsolePage : ContentPage
                     {
                         var itemProperties = dirListResponse.ResponseValue[i];
 
-                        var name = Utils.GetDictionaryString(itemProperties, "name");
+                        var name = RXDKXBDM.Utils.GetDictionaryString(itemProperties, "name");
                         var path = $"{Path}\\";
-                        var size = Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
-                        var create = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "createhi", "createlo"));
-                        var change = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "changehi", "changelo"));
+                        var size = RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
+                        var create = DateTime.FromFileTime((long)RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "createhi", "createlo"));
+                        var change = DateTime.FromFileTime((long)RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "changehi", "changelo"));
                         var imageUrl = itemProperties.ContainsKey("directory") ? "directory.png" : "file.png";
 
                         var flags = itemProperties.ContainsKey("directory") ? DriveItemFlag.Directory : DriveItemFlag.File;
@@ -339,14 +339,14 @@ public partial class ConsolePage : ContentPage
                         if (argument.EndsWith(":"))
                         {
                             var response = await DriveFreeSpace.SendAsync(Globals.GlobalConnection, argument);
-                            if (Utils.IsSuccess(response.ResponseCode) == false || response.ResponseValue == null)
+                            if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false || response.ResponseValue == null)
                             {
                                 await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                                 return;
                             }
 
-                            var totalBytes = Utils.GetDictionaryLongFromKeys(response.ResponseValue, "totalbyteshi", "totalbyteslo");
-                            var totalFreeBytes = Utils.GetDictionaryLongFromKeys(response.ResponseValue, "totalfreebyteshi", "totalfreebyteslo");
+                            var totalBytes = RXDKXBDM.Utils.GetDictionaryLongFromKeys(response.ResponseValue, "totalbyteshi", "totalbyteslo");
+                            var totalFreeBytes = RXDKXBDM.Utils.GetDictionaryLongFromKeys(response.ResponseValue, "totalfreebyteshi", "totalfreebyteslo");
                             var popup = new DriveProperriesPopup(driveItem, IpAddress, totalBytes, totalFreeBytes);
                             this.ShowPopup(popup);
                         }
@@ -359,7 +359,7 @@ public partial class ConsolePage : ContentPage
                     else if (command == "launch")
                     {
                         var response = await MagicBoot.SendAsync(Globals.GlobalConnection, argument, true);
-                        if (Utils.IsSuccess(response) == false)
+                        if (RXDKXBDM.Utils.IsSuccess(response) == false)
                         {
                             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                         }
@@ -380,7 +380,7 @@ public partial class ConsolePage : ContentPage
                                 return;
                             }
 
-                            var filename = await FileUtils.FilePicker(Window, driveItem.Name);
+                            var filename = await Utils.FilePicker(Window, driveItem.Name);
                             if (filename == null)
                             {
                                 return;
@@ -395,11 +395,11 @@ public partial class ConsolePage : ContentPage
                                 using (var downloadStream = new DownloadStream(fileStream))
                                 {
                                     var timer = new System.Timers.Timer(100);
-                                    timer.Elapsed += (sender, e) =>
+                                    timer.Elapsed += (object? sender, System.Timers.ElapsedEventArgs e) =>
                                     {
                                         Dispatcher.Dispatch(() =>
                                         {
-                                            BusyStatus.Text = $"Downloading {downloadStream.Position} of {downloadStream.ExpectedSize}";
+                                            BusyStatus.Text = $"Downloading {Utils.FormatBytes(downloadStream.Position)} of {Utils.FormatBytes(downloadStream.ExpectedSize)}";
                                         });
                                     };
                                     timer.AutoReset = true;
@@ -418,7 +418,7 @@ public partial class ConsolePage : ContentPage
                                         });
                                     }
 
-                                    if (Utils.IsSuccess(response.ResponseCode) == false)
+                                    if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
                                     {
                                         errorOccured = true;
                                         Dispatcher.Dispatch(async () =>
@@ -472,7 +472,7 @@ public partial class ConsolePage : ContentPage
     private async void Warm_Clicked(object? sender, EventArgs e)
     {
         var response = await Reboot.SendAsync(Globals.GlobalConnection, true);
-        if (Utils.IsSuccess(response) == false)
+        if (RXDKXBDM.Utils.IsSuccess(response) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -486,7 +486,7 @@ public partial class ConsolePage : ContentPage
         {
             Warm_Clicked(null, new EventArgs());
         }
-        else if (!Utils.IsSuccess(xbeInfoResponse.ResponseCode))
+        else if (!RXDKXBDM.Utils.IsSuccess(xbeInfoResponse.ResponseCode))
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -500,7 +500,7 @@ public partial class ConsolePage : ContentPage
 
         var title = xbeInfoResponse.ResponseValue["name"];
         var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, title, true);
-        if (Utils.IsSuccess(magicBootResponse) == false)
+        if (RXDKXBDM.Utils.IsSuccess(magicBootResponse) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }
@@ -509,7 +509,7 @@ public partial class ConsolePage : ContentPage
     private async void Cold_Clicked(object? sender, EventArgs e)
     {
         var response = await Reboot.SendAsync(Globals.GlobalConnection, false);
-        if (Utils.IsSuccess(response) == false)
+        if (RXDKXBDM.Utils.IsSuccess(response) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -519,7 +519,7 @@ public partial class ConsolePage : ContentPage
     private async void SyncronizeTime_Clicked(object? sender, EventArgs e)
     {
         var response = await SetSysTime.SendAsync(Globals.GlobalConnection, false);
-        if (Utils.IsSuccess(response.ResponseCode) == false)
+        if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
