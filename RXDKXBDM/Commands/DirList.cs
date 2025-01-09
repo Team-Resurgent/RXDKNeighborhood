@@ -10,17 +10,13 @@ namespace RXDKXBDM.Commands
 {
     public class DirList : Command
     {
-        public static async Task<CommandResponse<IDictionary<string, string>[]?>> SendAsync(Connection connection, string path)
+        public static async Task<CommandResponse<IDictionary<string, string>[]>> SendAsync(Connection connection, string path)
         {
             var tempPath = path.EndsWith("\\") ? path : $"{path}\\";
             var command = $"dirlist name=\"{tempPath}\"";
-            var result = new List<Dictionary<string, string>>();
-            var response = await SendCommandAndGetResponseAsync(connection, command);
-            if (response.IsSuccess())
-            {
-                return new CommandResponse<IDictionary<string, string>[]?>(response.ResponseCode, Utils.MultilineResponseToDictionaryArray(response.ResponseValue));
-            }
-            return new CommandResponse<IDictionary<string, string>[]?>(response.ResponseCode, null);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<IDictionary<string, string>[]>(socketResponse.ResponseCode, Utils.BodyToDictionaryArray(socketResponse.Body));
+            return commandResponse;
         }
     }
 }

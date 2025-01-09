@@ -11,7 +11,9 @@ namespace RXDKXBDM.Commands
     {
         public static async Task<CommandResponse<string>> SendAsync(Connection connection)
         {
-            return await SendCommandAndGetResponseAsync(connection, "dbgname");
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, "dbgname");
+            var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            return commandResponse;
         }
     }
 }

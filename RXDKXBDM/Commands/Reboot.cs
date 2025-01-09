@@ -9,14 +9,15 @@ namespace RXDKXBDM.Commands
 {
     public class Reboot : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, bool warm)
+        public static async Task<ResponseCode> SendAsync(Connection connection, bool warm)
         {
             var command = "reboot";
             if (warm)
             {
                 command += " warm";
             }
-            return await SendCommandAsync(connection, command);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            return socketResponse.ResponseCode;
         }
     }
 }

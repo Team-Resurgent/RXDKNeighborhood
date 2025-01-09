@@ -10,16 +10,12 @@ namespace RXDKXBDM.Commands
 {
     public class GetFileAttributes : Command
     {
-        public static async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection, string path)
+        public static async Task<CommandResponse<IDictionary<string, string>>> SendAsync(Connection connection, string path)
         {
             var command = $"getfileattributes name=\"{path}\"";
-            var result = new Dictionary<string, string>();
-            var response = await SendCommandAndGetResponseAsync(connection, command);
-            if (response.IsSuccess())
-            {
-                return new CommandResponse<IDictionary<string, string>?>(response.ResponseCode, Utils.MultilineResponseToDictionary(response.ResponseValue));
-            }
-            return new CommandResponse<IDictionary<string, string>?>(response.ResponseCode, null);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.BodyToDictionary(socketResponse.Body));
+            return commandResponse;
         }
     }
 }

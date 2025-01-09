@@ -18,8 +18,9 @@ namespace RXDKXBDM.Commands
             command += hidden ? " hidden=1" : " hidden=0";
             command += readOnly ? " readonly=1" : " readonly=0";
 
-            var result = new Dictionary<string, string>();
-            return await SendCommandAndGetResponseAsync(connection, command);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            return commandResponse;
         }
     }
 }

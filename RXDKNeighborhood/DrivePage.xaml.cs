@@ -139,14 +139,14 @@ public partial class ConsolePage : ContentPage
                 if (Path == string.Empty)
                 {
                     var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(Globals.GlobalConnection);
-                    if (utilDriveInfoResponse.IsSuccess() == false || utilDriveInfoResponse.ResponseValue == null)
+                    if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
                     }
 
                     var driveListResponse = await DriveList.SendAsync(Globals.GlobalConnection);
-                    if (driveListResponse.IsSuccess() == false || driveListResponse.ResponseValue == null)
+                    if (Utils.IsSuccess(driveListResponse.ResponseCode) == false || driveListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
@@ -164,7 +164,7 @@ public partial class ConsolePage : ContentPage
                 else
                 {
                     var dirListResponse = await DirList.SendAsync(Globals.GlobalConnection, Path);
-                    if (dirListResponse.IsSuccess() == false || dirListResponse.ResponseValue == null)
+                    if (Utils.IsSuccess(dirListResponse.ResponseCode) == false || dirListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
@@ -214,9 +214,10 @@ public partial class ConsolePage : ContentPage
 
         var DriveItemsTest = new List<View>();
 
-        for (int i = 0; i < driveItems.Length; i++)
+        var sortedDriveItems = driveItems.OrderBy(d => (d.Flags & DriveItemFlag.File)).ThenBy(d => d.CombinePath()).ToArray();
+        for (int i = 0; i < sortedDriveItems.Length; i++)
         {
-            var driveItem = driveItems[i];
+            var driveItem = sortedDriveItems[i];
 
             var stackLayout = new TaggedStackLayout
             {
@@ -320,7 +321,7 @@ public partial class ConsolePage : ContentPage
                         if (argument.EndsWith(":"))
                         {
                             var response = await DriveFreeSpace.SendAsync(Globals.GlobalConnection, argument);
-                            if (response.IsSuccess() == false || response.ResponseValue == null)
+                            if (Utils.IsSuccess(response.ResponseCode) == false || response.ResponseValue == null)
                             {
                                 await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                                 return;
@@ -340,7 +341,7 @@ public partial class ConsolePage : ContentPage
                     else if (command == "launch")
                     {
                         var response = await MagicBoot.SendAsync(Globals.GlobalConnection, argument, true);
-                        if (response.IsSuccess() == false)
+                        if (Utils.IsSuccess(response) == false)
                         {
                             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                         }
@@ -376,7 +377,7 @@ public partial class ConsolePage : ContentPage
     private async void Warm_Clicked(object? sender, EventArgs e)
     {
         var response = await Reboot.SendAsync(Globals.GlobalConnection, true);
-        if (response.IsSuccess() == false)
+        if (Utils.IsSuccess(response) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -386,11 +387,11 @@ public partial class ConsolePage : ContentPage
     private async void WarmActiveTitle_Clicked(object? sender, EventArgs e)
     {
         var xbeInfoResponse = await XbeInfo.SendAsync(Globals.GlobalConnection, "");
-        if (xbeInfoResponse.ResponseCode == 402)
+        if (xbeInfoResponse.ResponseCode == ResponseCode.XBDM_ERROR_NOSUCHFILE)
         {
             Warm_Clicked(null, new EventArgs());
         }
-        else if (!xbeInfoResponse.IsSuccess())
+        else if (!Utils.IsSuccess(xbeInfoResponse.ResponseCode))
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -404,7 +405,7 @@ public partial class ConsolePage : ContentPage
 
         var title = xbeInfoResponse.ResponseValue["name"];
         var magicBootResponse = await MagicBoot.SendAsync(Globals.GlobalConnection, title, true);
-        if (magicBootResponse.IsSuccess() == false)
+        if (Utils.IsSuccess(magicBootResponse) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
         }
@@ -413,7 +414,7 @@ public partial class ConsolePage : ContentPage
     private async void Cold_Clicked(object? sender, EventArgs e)
     {
         var response = await Reboot.SendAsync(Globals.GlobalConnection, false);
-        if (response.IsSuccess() == false)
+        if (Utils.IsSuccess(response) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;
@@ -423,7 +424,17 @@ public partial class ConsolePage : ContentPage
     private async void SyncronizeTime_Clicked(object? sender, EventArgs e)
     {
         var response = await SetSysTime.SendAsync(Globals.GlobalConnection, false);
-        if (response.IsSuccess() == false)
+        if (Utils.IsSuccess(response.ResponseCode) == false)
+        {
+            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
+            return;
+        }
+    }
+
+    private async void Screenshot_Clicked(object? sender, EventArgs e)
+    {
+        var response = await RXDKXBDM.Commands.Screenshot.SendAsync(Globals.GlobalConnection);
+        if (Utils.IsSuccess(response.ResponseCode) == false)
         {
             await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
             return;

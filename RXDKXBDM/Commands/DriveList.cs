@@ -10,15 +10,12 @@ namespace RXDKXBDM.Commands
 {
     public class DriveList : Command
     {
-        public static async Task<CommandResponse<string[]?>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<string[]>> SendAsync(Connection connection)
         {
-            var response = await SendCommandAndGetResponseAsync(connection, "drivelist");
-            if (response.IsSuccess())
-            {
-                var result = response.ResponseValue.Select(c => c.ToString()).Order().ToArray();
-                return new CommandResponse<string[]?>(response.ResponseCode, result);
-            }
-            return new CommandResponse<string[]?>(response.ResponseCode, null);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, "drivelist");
+            var result = socketResponse.Response.Select(c => c.ToString()).Order().ToArray();
+            var commandResponse = new CommandResponse<string[]>(socketResponse.ResponseCode, result);
+            return commandResponse;
         }
     }
 }

@@ -9,6 +9,7 @@
                 <MenuFlyoutItem Text="Warm to Active Title" Clicked="WarmActiveTitle_Clicked"/>
                 <MenuFlyoutItem Text="Cold" Clicked="Cold_Clicked"/>
             </MenuFlyoutSubItem>
+            <MenuFlyoutItem Text="Screenshot" Clicked="Screenshot_Clicked"/>
             <MenuFlyoutItem Text="Syncronize Time" Clicked="SyncronizeTime_Clicked"/>
         </MenuBarItem>
     </ContentPage.MenuBarItems>

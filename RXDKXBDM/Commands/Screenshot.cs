@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace RXDKXBDM.Commands
 {
-    public class ActiveTitle : Command
+    public class Screenshot : Command
     {
-        public async Task<CommandResponse<string>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection)
         {
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, "xbeinfo running");
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, "screenshot");
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
             return commandResponse;
         }

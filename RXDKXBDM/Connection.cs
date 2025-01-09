@@ -90,41 +90,94 @@ namespace RXDKXBDM
         //name = "GamepadTest" sizehi=0x0 sizelo=0x0 createhi=0x01db5a72 createlo=0xa515c300 changehi=0x01db5a72 changelo=0xa515c300 directory
         //.
 
-        public async Task<Tuple<ConnectionState, string>> TryRecieveStringAsync()
+        private string ExtractLine(ref byte[] buffer, int bufferLen, ref int position)
+        {
+            var stringBuilder = new StringBuilder();
+            while (position < bufferLen) 
+            {
+                var currentChar = (char)buffer[position];
+                position++;
+                if (currentChar == '\r')
+                {
+                    continue;
+                }
+                if (currentChar == '\n')
+                {
+                    break;
+                }
+                stringBuilder.Append(currentChar);
+            }
+            return stringBuilder.ToString();
+        }
+
+        public async Task<SocketResponse> TryRecieveStringAsync()
         {
             if (mClient == null)
             {
-                Debug.Print("Error in TryRecieveString: Client Not Open");
-                return new Tuple<ConnectionState, string>(ConnectionState.ClientNotOpen, string.Empty);
+                return new SocketResponse { ResponseCode = ResponseCode.ClientNotOpen, Response = "Client Not Open" };
             }
             try
             {
                 if (WaitAvailable() == false)
                 {
-                    Debug.Print("Error in TryRecieveString: Timeout");
-                    return new Tuple<ConnectionState, string>(ConnectionState.Timeout, string.Empty);
+                    return new SocketResponse { ResponseCode = ResponseCode.Timeout, Response = "Timeout" };
                 }
-
-                var response = string.Empty;
+             
                 var readBuffer = new byte[1024];
-                while (mClient.Available > 0)
+
+                var bytesRead = await mClient.ReceiveAsync(readBuffer);
+                if (bytesRead < 5)
                 {
-                    var bytesRead = await mClient.ReceiveAsync(readBuffer);
-                    response += Encoding.UTF8.GetString(readBuffer, 0, bytesRead);
+                    return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
                 }
 
-                if (response.Length == 0)
+                var position = 0;
+                var header = ExtractLine(ref readBuffer, bytesRead, ref position);
+                if (header.Substring(3, 2).Equals("- ") == false || int.TryParse(header.AsSpan(0, 3), out var responseCodeInt) == false)
                 {
-                    Debug.Print("Error in TryRecieveString: Unexpected Result");
-                    return new Tuple<ConnectionState, string>(ConnectionState.UnexpectedResult, string.Empty);
+                    return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
                 }
 
-                return new Tuple<ConnectionState, string>(ConnectionState.Success, response);
+                var responseCode = (ResponseCode)responseCodeInt;
+                var response = header.Substring(5);
+                var socketResponse = new SocketResponse { ResponseCode = (ResponseCode)responseCode, Response = response };
+                if (responseCode == ResponseCode.XBDM_SUCCESS_OK || responseCode == ResponseCode.XBDM_SUCCESS_CONNECTED)
+                {
+                    return socketResponse;
+                }
+
+                if (responseCode == ResponseCode.XBDM_SUCCESS_MULTIRESPONSE)
+                {
+                    using var stream = new MemoryStream();
+                    stream.Write(readBuffer, position, bytesRead - position);
+                    while (mClient.Available > 0)
+                    {
+                        var bytesRead2 = await mClient.ReceiveAsync(readBuffer);
+                        stream.Write(readBuffer, 0, bytesRead2);
+                    }
+
+                    var body = new List<string>();
+                    var multiLineBuffer = stream.ToArray();
+                    var multiLineBufferPosition = 0;
+                    while (multiLineBufferPosition < multiLineBuffer.Length)
+                    {
+                        var line = ExtractLine(ref multiLineBuffer, multiLineBuffer.Length, ref multiLineBufferPosition);
+                        if (line == ".")
+                        {
+                            break;
+                        }
+                        body.Add(line);
+                    }
+
+                    socketResponse.Body = body.ToArray();
+                    return socketResponse;
+                }
+
+                return new SocketResponse { ResponseCode = ResponseCode.UnexpectedResult, Response = "Unexpected Result" };
             }
             catch (Exception ex)
             {
-                Debug.Print($"Error in TryRecieveString: {ex}");
-                return new Tuple<ConnectionState, string>(ConnectionState.SocketError, string.Empty);
+                return new SocketResponse { ResponseCode = ResponseCode.SocketError, Response = ex.ToString() };
             }
         }
 
@@ -170,8 +223,8 @@ namespace RXDKXBDM
             {
                 await mClient.ConnectAsync(IPAddress.Parse(mAddress), 731);
                 var response = await TryRecieveStringAsync();
-                if (response.Item1 == ConnectionState.Success && !response.Item2.Equals("201- connected\r\n"))
-                {
+                if (response.ResponseCode != ResponseCode.XBDM_SUCCESS_CONNECTED)
+                { 
                     Debug.Print("Error in TrySendString: Unexpected Result");
                     return ConnectionState.UnexpectedResult;
                 }

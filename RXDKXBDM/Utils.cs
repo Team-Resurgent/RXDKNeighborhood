@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RXDKXBDM.Commands;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,17 +11,17 @@ namespace RXDKXBDM
 {
     public static class Utils
     {
-        public static IDictionary<string, string> MultilineResponseToDictionary(string response)
+        public static bool IsSuccess(ResponseCode responseCode)
+        {
+            return (int)responseCode >= 200 && (int)responseCode <= 299;
+        }
+
+        public static IDictionary<string, string> BodyToDictionary(string[] body)
         {
             var result = new Dictionary<string, string>();
-            var lines = response.Split("\r\n");
-            for (int i = 1; i < lines.Length; i++)
+            for (int i = 1; i < body.Length; i++)
             {
-                var line = lines[i];
-                if (line == ".")
-                {
-                    break;
-                }
+                var line = body[i];
                 var temp = StringToDictionary(line);
                 var keys = temp.Keys.ToArray();
                 for (var j = 0; j < keys.Length; j++)
@@ -32,17 +33,12 @@ namespace RXDKXBDM
             return result;
         }
        
-        public static IDictionary<string, string>[] MultilineResponseToDictionaryArray(string response)
+        public static IDictionary<string, string>[] BodyToDictionaryArray(string[] body)
         {
             var result = new List<Dictionary<string, string>>();
-            var lines = response.Split("\r\n");
-            for (int i = 1; i < lines.Length; i++)
+            for (int i = 1; i < body.Length; i++)
             {
-                var line = lines[i];
-                if (line == ".")
-                {
-                    break;
-                }
+                var line = body[i];
                 result.Add(StringToDictionary(line));
             }
             return result.ToArray();

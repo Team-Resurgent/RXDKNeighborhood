@@ -30,9 +30,11 @@ namespace RXDKNeighborhood
             {
                 new() { Name = "Add Xbox", Description = "", ImageUrl = "add_xbox.png", Type = ConsoleItemType.AddXbox }
             };
-            for (int i = 0; i < consoleDetails.Length; i++)
+
+            var sortedConsoleDetails = consoleDetails.OrderBy(c => c.IpAddress).ToArray();
+            for (int i = 0; i < sortedConsoleDetails.Length; i++)
             {
-                var consoleDetail = consoleDetails[i];
+                var consoleDetail = sortedConsoleDetails[i];
                 consoleItems.Add(new() { Name = consoleDetail.Name, Description = consoleDetail.IpAddress, ImageUrl = "xbox.png", Type = ConsoleItemType.XboxOriginal });
             }
 
@@ -135,7 +137,7 @@ namespace RXDKNeighborhood
                 if (await connection.OpenAsync(input) == true)
                 {
                     var response = await DebugName.SendAsync(connection);
-                    if (response.IsSuccess() == false)
+                    if (Utils.IsSuccess(response.ResponseCode) == false)
                     {
                         await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
                         connection.Close();

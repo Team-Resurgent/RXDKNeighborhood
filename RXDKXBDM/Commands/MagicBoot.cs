@@ -9,14 +9,15 @@ namespace RXDKXBDM.Commands
 {
     public class MagicBoot : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path, bool debug)
+        public static async Task<ResponseCode> SendAsync(Connection connection, string path, bool debug)
         {
             var command = $"magicboot title=\"{path}\"";
             if (debug) 
             {
                 command += " debug";
             }
-            return await SendCommandAsync(connection, command);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            return socketResponse.ResponseCode;
         }
     }
 }

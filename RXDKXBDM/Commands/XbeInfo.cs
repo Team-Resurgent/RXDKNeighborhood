@@ -9,20 +9,16 @@ namespace RXDKXBDM.Commands
 {
     public class XbeInfo : Command
     {
-        public static async Task<CommandResponse<IDictionary<string, string>?>> SendAsync(Connection connection, string name)
+        public static async Task<CommandResponse<IDictionary<string, string>>> SendAsync(Connection connection, string name)
         {
             string command = $"xbeinfo";
             if (string.IsNullOrEmpty(name))
             {
                 command += " running";
             }
-            var result = new Dictionary<string, string>();
-            var response = await SendCommandAndGetResponseAsync(connection, command);
-            if (response.IsSuccess())
-            {
-                return new CommandResponse<IDictionary<string, string>?>(response.ResponseCode, Utils.MultilineResponseToDictionary(response.ResponseValue));
-            }
-            return new CommandResponse<IDictionary<string, string>?>(response.ResponseCode, null);
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.BodyToDictionary(socketResponse.Body));
+            return commandResponse;
         }
     }
 }
