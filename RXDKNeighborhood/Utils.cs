@@ -1,9 +1,4 @@
-﻿using RXDKNeighborhood.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using RXDKXBDM.Commands;
 using Windows.Storage.Pickers;
 
 namespace RXDKNeighborhood
@@ -24,6 +19,31 @@ namespace RXDKNeighborhood
                 return $"{(double)bytes / KB:0.##} KB";
 
             return $"{bytes} bytes";
+        }
+
+        public static async Task<bool> DownloadFolderAsync(string sourcefolder, string destfolder, Action<long, long> progress)
+        {
+            return await Task.Run(() =>
+            {
+                return true;
+            });
+        }
+
+        public static async Task<bool> DownloadFileAsync(string sourcefile, string destfile, Action<long, long> progress)
+        {
+            return await Task.Run(() =>
+            {
+                using (var fileStream = new FileStream(destfile, FileMode.Create))
+                using (var downloadStream = new DownloadStream(fileStream, progress))
+                {
+                    var response = Download.SendAsync(Globals.GlobalConnection, sourcefile, downloadStream).Result;
+                    if (!RXDKXBDM.Utils.IsSuccess(response.ResponseCode) || downloadStream.ExpectedSize != downloadStream.Length)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
 
         public static async Task<string?> FilePicker(Window window, string name)

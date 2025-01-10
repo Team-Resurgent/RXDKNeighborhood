@@ -1,7 +1,7 @@
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls.Shapes;
 using RXDKNeighborhood.Controls;
-using RXDKNeighborhood.ViewModels;
+using RXDKXBDM.Models;
 
 namespace RXDKNeighborhood;
 

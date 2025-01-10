@@ -1,4 +1,4 @@
-﻿namespace RXDKNeighborhood.ViewModels
+﻿namespace RXDKXBDM.Models
 {
     [Flags]
     public enum DriveItemFlag

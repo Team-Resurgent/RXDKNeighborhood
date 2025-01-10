@@ -1,12 +1,11 @@
-﻿using Microsoft.Maui.Storage;
-using RXDKXBDM;
-using System.Diagnostics;
+﻿using RXDKXBDM;
 
 namespace RXDKNeighborhood
 {
     public class DownloadStream : ExpectedSizeStream
     {
         private Stream mStream;
+        private Action<long, long> mProgress;
         private long mExpectedSize;
 
         public override long ExpectedSize { get { return mExpectedSize; } }
@@ -25,39 +24,31 @@ namespace RXDKNeighborhood
             set =>  mStream.Position = value;
         }
 
-        public DownloadStream(Stream stream)
+        public DownloadStream(Stream stream, Action<long, long> progress)
         {
             mStream = stream;
             mExpectedSize = 0;
-            mDisposed = false;
+            mProgress = progress;
         }
 
         public override void Flush()
         {
-            mStream?.Flush();
+            mStream.Flush();
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (mStream == null)
-            {
-                return 0;
-            }
             return mStream.Read(buffer, offset, count);
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (mStream == null)
-            {
-                return 0;
-            }
             return mStream.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            mStream?.SetLength(value);
+            mStream.SetLength(value);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -69,6 +60,7 @@ namespace RXDKNeighborhood
                 count -= 4;
             }
             mStream.Write(buffer, offset, count);
+            mProgress.Invoke(mStream.Position, mExpectedSize);
         }
     }
 }

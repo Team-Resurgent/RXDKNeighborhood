@@ -1,13 +1,9 @@
 using System.Net;
 using RXDKXBDM.Commands;
-using RXDKNeighborhood.ViewModels;
 using RXDKNeighborhood.Controls;
-using RXDKXBDM;
 using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Maui.Storage;
-using Windows.Storage.Pickers;
-using Microsoft.Maui;
-using System.Diagnostics;
+using RXDKXBDM.Models;
 
 namespace RXDKNeighborhood;
 
@@ -152,8 +148,6 @@ public partial class ConsolePage : ContentPage
         {
             if (await Globals.GlobalConnection.OpenAsync(IpAddress) == true)
             {
-                var driveItems = new List<DriveItem>();
-
                 if (Path == string.Empty)
                 {
                     var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(Globals.GlobalConnection);
@@ -172,49 +166,27 @@ public partial class ConsolePage : ContentPage
 
                     if (driveListResponse.ResponseValue != null)
                     {
+                        var driveItems = new List<DriveItem>();
                         for (int i = 0; i < driveListResponse.ResponseValue.Length; i++)
                         {
                             var drive = driveListResponse.ResponseValue[i];
                             driveItems.Add(new DriveItem { Name = DriveLetterToName(drive, utilDriveInfoResponse.ResponseValue), Path = $"{drive}:", ImageUrl = "drive.png", Flags = DriveItemFlag.Drive });
                         }
+                        PopulateDriveItems(driveItems.ToArray());
                     }
                 }
                 else
                 {
-                    var dirListResponse = await DirList.SendAsync(Globals.GlobalConnection, Path);
+                    var dirListResponse = await DirList.SendAsync(Globals.GlobalConnection, Path + "\\");
                     if (RXDKXBDM.Utils.IsSuccess(dirListResponse.ResponseCode) == false || dirListResponse.ResponseValue == null)
                     {
                         Globals.GlobalConnection.Close();
                         return false;
                     }
 
-                    for (var i = 0; i < dirListResponse.ResponseValue.Length; i++)
-                    {
-                        var itemProperties = dirListResponse.ResponseValue[i];
-
-                        var name = RXDKXBDM.Utils.GetDictionaryString(itemProperties, "name");
-                        var path = $"{Path}\\";
-                        var size = RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
-                        var create = DateTime.FromFileTime((long)RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "createhi", "createlo"));
-                        var change = DateTime.FromFileTime((long)RXDKXBDM.Utils.GetDictionaryLongFromKeys(itemProperties, "changehi", "changelo"));
-                        var imageUrl = itemProperties.ContainsKey("directory") ? "directory.png" : "file.png";
-
-                        var flags = itemProperties.ContainsKey("directory") ? DriveItemFlag.Directory : DriveItemFlag.File;
-                        if (itemProperties.ContainsKey("readonly"))
-                        {
-                            flags |= DriveItemFlag.ReadOnly;
-                        }
-                        if (itemProperties.ContainsKey("hidden"))
-                        {
-                            flags |= DriveItemFlag.Hidden;
-                        }
-
-                        var driveItem = new DriveItem { Name = name, Path = path, Size = size, Created = create, Changed = change, ImageUrl = imageUrl,  Flags = flags };
-                        driveItems.Add(driveItem);
-                    }
+                    PopulateDriveItems(dirListResponse.ResponseValue);
                 }
 
-                PopulateDriveItems(driveItems.ToArray());
                 return true;
             }
         }
@@ -372,74 +344,60 @@ public partial class ConsolePage : ContentPage
                     {
                         try
                         {
-
-
                             if ((driveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory)
                             {
-                                await DisplayAlert("Error", "Directory not implemented yet.", "Ok");
-                                return;
-                            }
-
-                            var filename = await Utils.FilePicker(Window, driveItem.Name);
-                            if (filename == null)
-                            {
-                                return;
-                            }
-
-                            ShowBusy();
-
-                            bool errorOccured = await Task.Run(() =>
-                            {
-                                bool errorOccured = false;
-                                using (var fileStream = new FileStream(filename, FileMode.Create))
-                                using (var downloadStream = new DownloadStream(fileStream))
+                                var folder = await FolderPicker.Default.PickAsync();
+                                if (folder == null)
                                 {
-                                    var timer = new System.Timers.Timer(100);
-                                    timer.Elapsed += (object? sender, System.Timers.ElapsedEventArgs e) =>
+                                    return;
+                                }
+
+                                ShowBusy();
+
+                                bool success = await Utils.DownloadFolderAsync(argument, "", (step, total) =>
+                                {
+                                    Dispatcher.Dispatch(() =>
                                     {
-                                        Dispatcher.Dispatch(() =>
-                                        {
-                                            BusyStatus.Text = $"Downloading {Utils.FormatBytes(downloadStream.Position)} of {Utils.FormatBytes(downloadStream.ExpectedSize)}";
-                                        });
-                                    };
-                                    timer.AutoReset = true;
-                                    timer.Start();
+                                        BusyStatus.Text = $"Downloading {Utils.FormatBytes(step)} of {Utils.FormatBytes(total)}";
+                                    });
+                                });
 
-                                    var response = Download.SendAsync(Globals.GlobalConnection, argument, downloadStream).Result;
+                                if (success == false)
+                                {
+                                    await DisplayAlert("Error", "Download failed.", "Ok");
+                                }
 
-                                    timer.Stop();
+                                HideBusy();
+                            }
+                            else
+                            {
+                                var filename = await Utils.FilePicker(Window, driveItem.Name);
+                                if (filename == null)
+                                {
+                                    return;
+                                }
 
-                                    if (downloadStream.ExpectedSize != downloadStream.Length)
+                                ShowBusy();
+
+                                bool success = await Utils.DownloadFileAsync(argument, filename, (step, total) =>
+                                {
+                                    Dispatcher.Dispatch(() =>
                                     {
-                                        errorOccured = true;
-                                        Dispatcher.Dispatch(async () =>
-                                        {
-                                            await DisplayAlert("Error", "File saved does not match expected size.", "Ok");
-                                        });
-                                    }
+                                        BusyStatus.Text = $"Downloading {Utils.FormatBytes(step)} of {Utils.FormatBytes(total)}";
+                                    });
+                                });
 
-                                    if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
+                                if (success == false)
+                                {
+                                    await DisplayAlert("Error", "Download failed.", "Ok");
+                                    if (File.Exists(filename))
                                     {
-                                        errorOccured = true;
-                                        Dispatcher.Dispatch(async () =>
-                                        {
-                                            await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
-                                        });
+                                        File.Delete(filename);
                                     }
                                 }
-                                return errorOccured;
-                            });
 
-                            if (errorOccured == true)
-                            {
-                                if (File.Exists(filename))
-                                {
-                                    File.Delete(filename);
-                                }
+                                HideBusy();
                             }
-
-                            HideBusy();
-
                         }
                         catch (Exception ex)
                         {
