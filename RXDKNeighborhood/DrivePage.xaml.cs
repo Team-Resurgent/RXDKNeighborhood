@@ -17,6 +17,8 @@ public partial class ConsolePage : ContentPage
 
     public bool HasLoaded { get; set; }
 
+    private DriveItem[] mDriveItems;
+
     public ConsolePage()
 	{
         InitializeComponent();
@@ -24,6 +26,7 @@ public partial class ConsolePage : ContentPage
         IpAddress = string.Empty;
         Path = string.Empty;
         HasLoaded = false;
+        mDriveItems = [];
         SizeChanged += OnSizeChanged;
     }
 
@@ -172,7 +175,8 @@ public partial class ConsolePage : ContentPage
                             var drive = driveListResponse.ResponseValue[i];
                             driveItems.Add(new DriveItem { Name = DriveLetterToName(drive, utilDriveInfoResponse.ResponseValue), Path = $"{drive}:", ImageUrl = "drive.png", Flags = DriveItemFlag.Drive });
                         }
-                        PopulateDriveItems(driveItems.ToArray());
+                        mDriveItems = driveItems.ToArray();
+                        PopulateDriveItems();
                     }
                 }
                 else
@@ -184,7 +188,8 @@ public partial class ConsolePage : ContentPage
                         return false;
                     }
 
-                    PopulateDriveItems(dirListResponse.ResponseValue);
+                    mDriveItems = dirListResponse.ResponseValue;
+                    PopulateDriveItems();
                 }
 
                 return true;
@@ -193,7 +198,7 @@ public partial class ConsolePage : ContentPage
         return false;
     }
 
-    private void PopulateDriveItems(DriveItem[] driveItems)
+    private void PopulateDriveItems()
     {
         DriveCollectionView.ItemTemplate = new DataTemplate(() =>
         {
@@ -202,9 +207,9 @@ public partial class ConsolePage : ContentPage
             return contentPresenter;
         });
 
-        var DriveItemsTest = new List<View>();
+        var driveItemViews = new List<View>();
 
-        var sortedDriveItems = driveItems.OrderBy(d => (d.Flags & DriveItemFlag.File)).ThenBy(d => d.CombinePath()).ToArray();
+        var sortedDriveItems = mDriveItems.OrderBy(d => d.IsFile).ThenBy(d => d.CombinePath()).ToArray();
         for (int i = 0; i < sortedDriveItems.Length; i++)
         {
             var driveItem = sortedDriveItems[i];
@@ -222,7 +227,8 @@ public partial class ConsolePage : ContentPage
                 WidthRequest = 100,
                 HeightRequest = 100,
                 HorizontalOptions = LayoutOptions.Center,
-                Source = ImageSource.FromFile(driveItem.ImageUrl)
+                Source = ImageSource.FromFile(driveItem.ImageUrl),
+                Opacity = driveItem.IsHidden ? 0.25 : 1
             };
             stackLayout.Children.Add(image);
 
@@ -244,16 +250,14 @@ public partial class ConsolePage : ContentPage
 
             var menuFlyout = new MenuFlyout();
 
-            if (driveItem.HasProerties)
+            var propertiesItem = new MenuFlyoutItem
             {
-                var propertiesItem = new MenuFlyoutItem
-                {
-                    Text = "Properties",
-                    CommandParameter = $"properties={driveItem.CombinePath()}",
-                };
-                propertiesItem.Clicked += MenuItem_Clicked;
-                menuFlyout.Add(propertiesItem);
-            }
+                Text = "Properties",
+                CommandParameter = $"properties={driveItem.CombinePath()}",
+            };
+            propertiesItem.Clicked += MenuItem_Clicked;
+            menuFlyout.Add(propertiesItem);
+   
             if (driveItem.HasDownload)
             {
                 var downloadItem = new MenuFlyoutItem
@@ -288,10 +292,10 @@ public partial class ConsolePage : ContentPage
 
             FlyoutBase.SetContextFlyout(stackLayout, menuFlyout);
 
-            DriveItemsTest.Add(stackLayout);
+            driveItemViews.Add(stackLayout);
         }
 
-        DriveCollectionView.ItemsSource = DriveItemsTest;
+        DriveCollectionView.ItemsSource = driveItemViews;
     }
 
     private async void MenuItem_Clicked(object? sender, EventArgs e)
@@ -324,7 +328,10 @@ public partial class ConsolePage : ContentPage
                         }
                         else
                         {
-                            var popup = new PathProperriesPopup(driveItem, IpAddress);
+                            var popup = new PathProperriesPopup(driveItem, IpAddress, () =>
+                            {
+                                PopulateDriveItems();
+                            });
                             this.ShowPopup(popup);
                         }
                     }
@@ -344,7 +351,7 @@ public partial class ConsolePage : ContentPage
                     {
                         try
                         {
-                            if ((driveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory)
+                            if (driveItem.IsDirectory)
                             {
                                 var folder = await FolderPicker.Default.PickAsync();
                                 if (folder == null)
@@ -414,7 +421,7 @@ public partial class ConsolePage : ContentPage
     {
         if (sender != null && ((TaggedStackLayout)sender).Tag is DriveItem selectedDriveItem)
         {
-            if ((selectedDriveItem.Flags & DriveItemFlag.Drive) == DriveItemFlag.Drive || (selectedDriveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory)
+            if (selectedDriveItem.IsDrive || selectedDriveItem.IsDirectory)
             {
                 var parameters = new Dictionary<string, object>
                 {

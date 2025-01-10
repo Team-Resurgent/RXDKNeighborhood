@@ -26,17 +26,27 @@
 
         public DriveItemFlag Flags { get; set; }
 
-        public bool HasProerties => true;
+        public bool IsReadOnly => (Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly;
 
-        public bool HasDownload => (Flags & DriveItemFlag.File) == DriveItemFlag.File || (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
+        public bool IsHidden => (Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden;
 
-        public bool HasDelete => (Flags & DriveItemFlag.File) == DriveItemFlag.File || (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
+        public bool IsDrive => (Flags & DriveItemFlag.Drive) == DriveItemFlag.Drive;
 
-        public bool HasLaunch => (Flags & DriveItemFlag.File) == DriveItemFlag.File && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
+        public bool IsFile => (Flags & DriveItemFlag.File) == DriveItemFlag.File;
+
+        public bool IsDirectory => (Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory;
+
+        public bool HasDownload => IsFile || IsDirectory;
+
+        public bool HasDelete => IsFile || IsDirectory;
+
+        public bool HasLaunch => IsFile && Name.EndsWith(".xbe", StringComparison.CurrentCultureIgnoreCase);
+
+       
 
         public string CombinePath()
         {
-            if ((Flags & DriveItemFlag.Drive) == DriveItemFlag.Drive)
+            if (IsDrive)
             {
                 return Path;
             }

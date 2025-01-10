@@ -8,10 +8,12 @@ namespace RXDKNeighborhood;
 public class PathProperriesPopup : Popup
 {
     private DriveItem mDriveItem;
+    private Action mNeedsUpdate;
 
-    public PathProperriesPopup(DriveItem driveItem, string ipAddress)
+    public PathProperriesPopup(DriveItem driveItem, string ipAddress, Action needsUpdate)
     {
         mDriveItem = driveItem;
+        mNeedsUpdate = needsUpdate;
 
         var isDarkTheme = AppInfo.RequestedTheme == AppTheme.Dark;
 
@@ -84,7 +86,7 @@ public class PathProperriesPopup : Popup
 
         var itemTypeLabel = new Label
         {
-            Text = (mDriveItem.Flags & DriveItemFlag.Directory) == DriveItemFlag.Directory ? "Directory" : "File",
+            Text = mDriveItem.IsDirectory ? "Directory" : "File",
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
@@ -165,7 +167,7 @@ public class PathProperriesPopup : Popup
 
         var readonlyCheckbox = new CheckBox
         {
-            IsChecked = (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly,
+            IsChecked = mDriveItem.IsReadOnly,
         };
         readonlyCheckbox.CheckedChanged += Readonly_CheckedChanged;
 
@@ -177,7 +179,7 @@ public class PathProperriesPopup : Popup
 
         var hiddenCheckbox = new CheckBox
         {
-            IsChecked = (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden,
+            IsChecked = driveItem.IsHidden,
         };
         hiddenCheckbox.CheckedChanged += Hidden_CheckedChanged;
 
@@ -238,6 +240,7 @@ public class PathProperriesPopup : Popup
     private async void Readonly_CheckedChanged(object? sender, CheckedChangedEventArgs e)
     {
         mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.ReadOnly) : (mDriveItem.Flags & ~DriveItemFlag.ReadOnly);
+        mNeedsUpdate.Invoke();
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
         if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
         {
@@ -248,6 +251,7 @@ public class PathProperriesPopup : Popup
     private async void Hidden_CheckedChanged(object? sender, CheckedChangedEventArgs e)
     {
         mDriveItem.Flags = e.Value ? (mDriveItem.Flags | DriveItemFlag.Hidden) : (mDriveItem.Flags & ~DriveItemFlag.Hidden);
+        mNeedsUpdate.Invoke();
         var response = await SetFileAttributes.SendAsync(Globals.GlobalConnection, mDriveItem.CombinePath(), mDriveItem.Created, mDriveItem.Changed, (mDriveItem.Flags & DriveItemFlag.Hidden) == DriveItemFlag.Hidden, (mDriveItem.Flags & DriveItemFlag.ReadOnly) == DriveItemFlag.ReadOnly);
         if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false)
         {
