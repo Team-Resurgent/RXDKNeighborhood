@@ -4,6 +4,42 @@ namespace RXDKXBDM
 {
     public static class Utils
     {
+        public static string[] SplitBySpaceIgnoringQuotes(string input)
+        {
+            var result = new List<string>();
+            var currentPart = string.Empty;
+            bool insideQuotes = false;
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+                if (c == '"') 
+                {
+                    insideQuotes = !insideQuotes;
+                    continue; 
+                }
+                if (c == ' ' && !insideQuotes) 
+                {
+                    if (!string.IsNullOrEmpty(currentPart))
+                    {
+                        result.Add(currentPart);
+                        currentPart = string.Empty; 
+                    }
+                }
+                else
+                {
+                    currentPart += c; 
+                }
+            }
+
+            if (!string.IsNullOrEmpty(currentPart))
+            {
+                result.Add(currentPart);
+            }
+
+            return result.ToArray();
+        }
+
         public static bool IsSuccess(ResponseCode responseCode)
         {
             return (int)responseCode >= 200 && (int)responseCode <= 299;
@@ -39,7 +75,7 @@ namespace RXDKXBDM
 
         public static Dictionary<string, string> StringToDictionary(string line)
         {
-            var parts = line.Split(" ").ToArray();
+            var parts = SplitBySpaceIgnoringQuotes(line);
             var result = new Dictionary<string, string>();
             for (int i = 0; i < parts.Length; i++)
             {

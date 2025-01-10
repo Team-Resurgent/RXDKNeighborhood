@@ -16,7 +16,7 @@
 
         public string Path { get; set; }
 
-        public ulong Size { get; set; }
+        public long Size { get; set; }
 
         public DateTime Created { get; set; }
 

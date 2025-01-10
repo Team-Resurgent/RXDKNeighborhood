@@ -19,7 +19,7 @@ namespace RXDKXBDM.Commands
                     var itemProperties = dirList[i];
 
                     var name = Utils.GetDictionaryString(itemProperties, "name");
-                    var size = Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
+                    var size = (long)Utils.GetDictionaryLongFromKeys(itemProperties, "sizehi", "sizelo");
                     var create = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "createhi", "createlo"));
                     var change = DateTime.FromFileTime((long)Utils.GetDictionaryLongFromKeys(itemProperties, "changehi", "changelo"));
                     var imageUrl = itemProperties.ContainsKey("directory") ? "directory.png" : "file.png";

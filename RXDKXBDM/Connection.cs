@@ -74,7 +74,7 @@ namespace RXDKXBDM
             return stringBuilder.ToString();
         }
 
-        public async Task<SocketResponse> TryRecieveBodyAsync(ExpectedSizeStream? binaryResponseStream = null)
+        public async Task<SocketResponse> TryRecieveBodyAsync(CancellationToken? cancellationToken = null, ExpectedSizeStream ? binaryResponseStream = null)
         {
             if (mClient == null)
             {
@@ -87,8 +87,7 @@ namespace RXDKXBDM
                     return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Timeout" };
                 }
 
-
-                var initialReadBuffer = new byte[1024];
+                var initialReadBuffer = new byte[16384];
                 var initialBytesRead = await mClient.ReceiveAsync(initialReadBuffer);
                 if (initialBytesRead < 5)
                 {
@@ -110,8 +109,7 @@ namespace RXDKXBDM
                     return socketResponse;
                 }
 
-
-                var readBuffer = new byte[32768];
+                var readBuffer = new byte[16384];
                 if (responseCode == ResponseCode.SUCCESS_MULTIRESPONSE)
                 {
                     using var stream = new MemoryStream();
@@ -154,11 +152,12 @@ namespace RXDKXBDM
                         while (mClient.Available > 0)
                         {
                             var bytesRead = await mClient.ReceiveAsync(readBuffer);
+                            if (cancellationToken != null && cancellationToken.Value.IsCancellationRequested)
+                            {
+                                FlushIncomingData();
+                                return new SocketResponse { ResponseCode = ResponseCode.SUCCESS_CANCELLED, Response = "Cancelled" };
+                            }
                             binaryResponseStream.Write(readBuffer, 0, bytesRead);
-                        }
-                        if (binaryResponseStream.Length == expectedSize || WaitAvailable() == false)
-                        {
-                            break;
                         }
                     }
 
@@ -171,6 +170,20 @@ namespace RXDKXBDM
             {
                 Debug.WriteLine(ex.ToString());
                 return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Failed process body" };
+            }
+        }
+
+        public async void FlushIncomingData()
+        {
+            if (mClient == null)
+            {
+                return;
+            }
+
+            byte[] buffer = new byte[1024];
+            while (mClient.Available > 0)
+            {
+                _ = await mClient.ReceiveAsync(buffer);
             }
         }
 

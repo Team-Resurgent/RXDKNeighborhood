@@ -304,15 +304,14 @@ public partial class ConsolePage : ContentPage
         {
             if (menuItem.BindingContext is TaggedStackLayout taggedStackLayout && taggedStackLayout.Tag is DriveItem driveItem && menuItem.CommandParameter is string commandParameter)
             {
-
-                var index = commandParameter.IndexOf("=");
+                var index = commandParameter.IndexOf('=');
                 if (index >= 0)
                 {
                     var command = commandParameter.Substring(0, index);
                     var argument = commandParameter.Substring(index + 1);
                     if (command == "properties")
                     {
-                        if (argument.EndsWith(":"))
+                        if (argument.EndsWith(':'))
                         {
                             var response = await DriveFreeSpace.SendAsync(Globals.GlobalConnection, argument);
                             if (RXDKXBDM.Utils.IsSuccess(response.ResponseCode) == false || response.ResponseValue == null)
@@ -361,7 +360,12 @@ public partial class ConsolePage : ContentPage
 
                                 ShowBusy();
 
-                                bool success = await Utils.DownloadFolderAsync(argument, "", (step, total) =>
+                                var x = await Utils.GetFolderComtents(argument, new CancellationToken(), (size) =>
+                                {
+
+                                });
+
+                                bool success = await Utils.DownloadFolderAsync(argument, "", new CancellationToken(), (step, total) =>
                                 {
                                     Dispatcher.Dispatch(() =>
                                     {
@@ -386,7 +390,7 @@ public partial class ConsolePage : ContentPage
 
                                 ShowBusy();
 
-                                bool success = await Utils.DownloadFileAsync(argument, filename, (step, total) =>
+                                bool success = await Utils.DownloadFileAsync(argument, filename, new CancellationToken(), (step, total) =>
                                 {
                                     Dispatcher.Dispatch(() =>
                                     {
