@@ -362,21 +362,21 @@ public partial class ConsolePage : ContentPage
 
                                 var x = await Utils.GetFolderComtents(argument, new CancellationToken(), (size) =>
                                 {
-
+                                    //NamespaceExtensionSystem.Diagnostics.Debug.Print($"{size}");
                                 });
 
-                                bool success = await Utils.DownloadFolderAsync(argument, "", new CancellationToken(), (step, total) =>
-                                {
-                                    Dispatcher.Dispatch(() =>
-                                    {
-                                        BusyStatus.Text = $"Downloading {Utils.FormatBytes(step)} of {Utils.FormatBytes(total)}";
-                                    });
-                                });
+                                //bool success = await Utils.DownloadFolderAsync(argument, "", new CancellationToken(), (step, total) =>
+                                //{
+                                //    Dispatcher.Dispatch(() =>
+                                //    {
+                                //        BusyStatus.Text = $"Downloading {Utils.FormatBytes(step)} of {Utils.FormatBytes(total)}";
+                                //    });
+                                //});
 
-                                if (success == false)
-                                {
-                                    await DisplayAlert("Error", "Download failed.", "Ok");
-                                }
+                                //if (success == false)
+                                //{
+                                //    await DisplayAlert("Error", "Download failed.", "Ok");
+                                //}
 
                                 HideBusy();
                             }
