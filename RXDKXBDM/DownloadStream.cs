@@ -1,11 +1,9 @@
-﻿using RXDKXBDM;
-
-namespace RXDKNeighborhood
+﻿namespace RXDKXBDM
 {
     public class DownloadStream : ExpectedSizeStream
     {
         private Stream mStream;
-        private Action<long, long> mProgress;
+        private Action<long, long>? mProgress;
 
         public override bool CanRead => mStream.CanRead;
 
@@ -21,6 +19,12 @@ namespace RXDKNeighborhood
         {
             get => mStream.Position;
             set => mStream.Position = value;
+        }
+
+        public DownloadStream(Stream stream)
+        {
+            mStream = stream;
+            mProgress = null;
         }
 
         public DownloadStream(Stream stream, Action<long, long> progress)
@@ -52,7 +56,7 @@ namespace RXDKNeighborhood
         public override void Write(byte[] buffer, int offset, int count)
         {
             mStream.Write(buffer, offset, count);
-            mProgress.Invoke(mStream.Position, ExpectedSize);
+            mProgress?.Invoke(mStream.Position, ExpectedSize);
         }
     }
 }

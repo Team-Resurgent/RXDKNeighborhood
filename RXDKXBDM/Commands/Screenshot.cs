@@ -1,11 +1,13 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Models;
+
+namespace RXDKXBDM.Commands
 {
     public class Screenshot : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, CancellationToken cancellationToken, ExpectedSizeStream outputStream)
+        public static async Task<CommandResponse<ScreenshotItem>> SendAsync(Connection connection, CancellationToken cancellationToken, DownloadStream outputSteam)
         {
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, "screenshot");
-            var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            var socketResponse = await SendCommandAndGetBinaryScreenshotResponseAsync(connection, "screenshot", cancellationToken, outputSteam);
+            var commandResponse = new CommandResponse<ScreenshotItem>(socketResponse.ResponseCode, socketResponse.Screenshot);
             return commandResponse;
         }
     }

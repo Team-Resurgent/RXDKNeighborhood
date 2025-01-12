@@ -106,19 +106,25 @@ namespace RXDKXBDM
             return result;
         }
 
+        public static uint GetDictionaryIntFromKey(IDictionary<string, string> keyValues, string key)
+        {
+            var value = GetDictionaryString(keyValues, key);
+            if (value.EndsWith(","))
+            {
+                value = value.Substring(0, value.Length - 1);
+            }
+            if (string.IsNullOrEmpty(value) || uint.TryParse(value.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var result) == false)
+            {
+                return 0;
+            }
+            return result;
+        }
+
         public static ulong GetDictionaryLongFromKeys(IDictionary<string, string> keyValues, string hiKey, string loKey)
         {
-            var hiValue = GetDictionaryString(keyValues, hiKey);
-            var loValue = GetDictionaryString(keyValues, loKey);
-            if (string.IsNullOrEmpty(hiValue) || uint.TryParse(hiValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var hi) == false)
-            {
-                return 0;
-            }
-            if (string.IsNullOrEmpty(loValue) || uint.TryParse(loValue.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var lo) == false)
-            {
-                return 0;
-            }
-            var result = ((ulong)hi << 32) | (ulong)lo;
+            var hiValue = GetDictionaryIntFromKey(keyValues, hiKey);
+            var loValue = GetDictionaryIntFromKey(keyValues, loKey);
+            var result = ((ulong)hiValue << 32) | loValue;
             return result;
         }
 

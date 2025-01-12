@@ -1,4 +1,6 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Models;
+
+namespace RXDKXBDM.Commands
 {
     public class SocketResponse
     {
@@ -9,7 +11,7 @@
         public SocketResponse()
         {
             ResponseCode = ResponseCode.SUCCESS_OK;
-            Response = string.Empty;;
+            Response = string.Empty;
         }
     }
 
@@ -29,19 +31,33 @@
         }
     }
 
-    public class BinarySocketResponse
+    public class ScreenshotSocketResponse
     {
         public ResponseCode ResponseCode { get; set; }
 
         public string Response { get; set; }
 
-        public byte[] Body { get; set; }
+        public ScreenshotItem Screenshot { get; set; }
 
-        public BinarySocketResponse(SocketResponse socketResponse)
+        public ScreenshotSocketResponse()
+        {
+            ResponseCode = ResponseCode.SUCCESS_OK;
+            Response = string.Empty;
+            Screenshot = new ScreenshotItem();
+        }
+
+        public ScreenshotSocketResponse(SocketResponse socketResponse)
         {
             ResponseCode = socketResponse.ResponseCode;
             Response = socketResponse.Response;
-            Body = [];
+            Screenshot = new ScreenshotItem();
+        }
+
+        public ScreenshotSocketResponse(ScreenshotItem screenshot)
+        {
+            ResponseCode = ResponseCode.SUCCESS_OK;
+            Response = string.Empty;
+            Screenshot = screenshot;
         }
     }
 

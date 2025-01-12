@@ -1,5 +1,8 @@
-﻿using RXDKXBDM.Commands;
+﻿using RXDKXBDM;
+using RXDKXBDM.Commands;
 using RXDKXBDM.Models;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Speech.Recognition;
 using Windows.Globalization;
 using Windows.Storage.Pickers;
@@ -126,6 +129,99 @@ namespace RXDKNeighborhood
             });
         }
 
+        private static void AoolyPixelDataToImage(Image<Rgb24> image, uint format, byte[] data)
+        {
+            const uint D3DFMT_LIN_A8R8G8B8 = 0x00000012;
+            const uint D3DFMT_LIN_X8R8G8B8 = 0x0000001E; 
+            const uint D3DFMT_LIN_R5G6B5 = 0x00000011; 
+            const uint D3DFMT_LIN_X1R5G5B5 = 0x0000001C; 
+
+            var dataOffset = 0;
+     
+            if (format == D3DFMT_LIN_A8R8G8B8 || format == D3DFMT_LIN_X8R8G8B8)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var b = data[dataOffset + 0];
+                        var g = data[dataOffset + 1];
+                        var r = data[dataOffset + 2];
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 4;
+                    }
+                }
+            }
+            else if (format == D3DFMT_LIN_R5G6B5)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
+                        var tempR = (temp >> 11) & 0x1F;
+                        var tempG = (temp >> 5) & 0x3F;
+                        var tempB = temp & 0x1F;
+                        var r = (byte)((tempR << 3) | (tempR >> 2));
+                        var g = (byte)((tempG << 2) | (tempG >> 4));
+                        var b = (byte)((tempB << 3) | (tempB >> 2));
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 2;
+                    }
+                }
+            }
+            else if (format == D3DFMT_LIN_X1R5G5B5)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
+                        var tempR = (temp >> 10) & 0x1F;
+                        var tempG = (temp >> 5) & 0x1F;
+                        var tempB = temp & 0x1F;
+                        var r = (byte)((tempR << 3) | (tempR >> 2));
+                        var g = (byte)((tempG << 3) | (tempG >> 2));
+                        var b = (byte)((tempB << 3) | (tempB >> 2));
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 2;
+                    }
+                }
+            }
+        }
+
+        public static async Task<bool> DownloadScreenshotAsync(string destfile, CancellationToken cancellationToken)
+        {
+            return await Task<bool>.Run(() =>
+            {
+                using (var memoryStream = new MemoryStream())
+                using (var downloadStream = new DownloadStream(memoryStream))
+                {
+                    var response = RXDKXBDM.Commands.Screenshot.SendAsync(Globals.GlobalConnection, cancellationToken, downloadStream).Result;
+                    if (!RXDKXBDM.Utils.IsSuccess(response.ResponseCode))
+                    {
+                        return false;
+                    }
+
+                    var screenshot = response.ResponseValue;
+                    var bytesPerPixel = screenshot.Pitch / screenshot.Width;
+                    using var image = new Image<Rgb24>((int)screenshot.Width, (int)screenshot.Height);
+                    AoolyPixelDataToImage(image, screenshot.Forrmat, screenshot.Data);
+
+                    try
+                    {
+                        image.Save(destfile);
+                    }
+                    catch 
+                    {
+                        return false;
+                    }
+
+                }
+                return true;
+            });
+        }
+
         public static async Task<string?> FilePicker(Window window, string name)
         {
             var extension = System.IO.Path.GetExtension(name);
@@ -140,6 +236,32 @@ namespace RXDKNeighborhood
                 SuggestedFileName = name
             };
             savePicker.FileTypeChoices.Add("Suggested File Types", [extension]);
+
+            if (window.Handler.PlatformView is MauiWinUIWindow mauiWinUIWindow)
+            {
+                var hwnd = mauiWinUIWindow.WindowHandle;
+                WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+            }
+            else
+            {
+                return null;
+            }
+
+            var file = await savePicker.PickSaveFileAsync();
+            return file?.Path;
+        }
+
+        public static async Task<string?> ImageFilePicker(Window window, string name)
+        {
+            var filetypes = new[] { ".bmp", ".gif", ".jpg", ".png", ".tif", ".tga", ".webp" };
+
+            var savePicker = new FileSavePicker
+            {
+                SuggestedStartLocation = PickerLocationId.Downloads,
+                SuggestedFileName = name,
+                DefaultFileExtension = ".png"
+            };
+            savePicker.FileTypeChoices.Add("Image File Types", filetypes);
 
             if (window.Handler.PlatformView is MauiWinUIWindow mauiWinUIWindow)
             {

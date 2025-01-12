@@ -495,14 +495,26 @@ public partial class ConsolePage : ContentPage
         }
     }
 
-    private void Screenshot_Clicked(object? sender, EventArgs e)
+    private async void Screenshot_Clicked(object? sender, EventArgs e)
     {
-        //using var outputStream = new FileStream("C:\\download.xbe", FileMode.CreateNew);
-        //var response = await RXDKXBDM.Commands.Screenshot.SendAsync(Globals.GlobalConnection, outputStream);
-        //if (Utils.IsSuccess(response.ResponseCode) == false)
-        //{
-        //    await DisplayAlert("Error", "Failed to connect to Xbox.", "Ok");
-        //    return;
-        //}
+        var filename = await Utils.ImageFilePicker(Window, "screenshot.png");
+        if (filename == null)
+        {
+            return;
+        }
+
+        ShowBusy();
+
+        bool success = await Utils.DownloadScreenshotAsync(filename, new CancellationToken());
+        if (success == false)
+        {
+            await DisplayAlert("Error", "Screenshot failed.", "Ok");
+            if (File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
+        }
+
+        HideBusy();
     }
 }
