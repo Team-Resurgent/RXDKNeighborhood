@@ -2,6 +2,6 @@
 {
     public abstract class ExpectedSizeStream : Stream
     {
-        public abstract long ExpectedSize { get; }
+        public abstract long ExpectedSize { get; set; }
     }
 }

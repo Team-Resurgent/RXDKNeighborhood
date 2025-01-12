@@ -117,7 +117,7 @@ namespace RXDKNeighborhood
                 using (var downloadStream = new DownloadStream(fileStream, progress))
                 {
                     var response = Download.SendAsync(Globals.GlobalConnection, sourcefile, cancellationToken, downloadStream).Result;
-                    if (!RXDKXBDM.Utils.IsSuccess(response.ResponseCode) || downloadStream.ExpectedSize != downloadStream.Length)
+                    if (!RXDKXBDM.Utils.IsSuccess(response.ResponseCode))
                     {
                         return false;
                     }

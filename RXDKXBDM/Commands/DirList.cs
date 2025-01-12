@@ -8,7 +8,7 @@ namespace RXDKXBDM.Commands
         {
             var tempPath = path.EndsWith("\\") ? path : $"{path}\\";
             var command = $"dirlist name=\"{tempPath}\"";
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var socketResponse = await SendCommandAndGetMultilineResponseAsync(connection, command);
             if (Utils.IsSuccess(socketResponse.ResponseCode))
             {
                 var driveItems = new List<DriveItem>();

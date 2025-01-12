@@ -7,7 +7,7 @@ namespace RXDKXBDM.Commands
         public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path, CancellationToken cancellationToken, ExpectedSizeStream outputStream)
         {
             var command = $"getfile name=\"{path}\"";
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command, cancellationToken, outputStream);
+            var socketResponse = await SendCommandAndGetBinaryResponseAsync(connection, command, cancellationToken, outputStream);
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
             return commandResponse;
         }
@@ -15,7 +15,7 @@ namespace RXDKXBDM.Commands
         public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path, uint offset, uint size, CancellationToken cancellationToken, ExpectedSizeStream outputStream)
         {
             var command = $"getfile name=\"{path}\" offset=0x{offset:x8} size=0x{offset:x8}";
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command, cancellationToken, outputStream);
+            var socketResponse = await SendCommandAndGetBinaryResponseAsync(connection, command, cancellationToken, outputStream);
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
             return commandResponse;
         }

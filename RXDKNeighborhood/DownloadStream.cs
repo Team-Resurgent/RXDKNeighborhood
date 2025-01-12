@@ -6,9 +6,6 @@ namespace RXDKNeighborhood
     {
         private Stream mStream;
         private Action<long, long> mProgress;
-        private long mExpectedSize;
-
-        public override long ExpectedSize { get { return mExpectedSize; } }
 
         public override bool CanRead => mStream.CanRead;
 
@@ -18,16 +15,17 @@ namespace RXDKNeighborhood
 
         public override long Length => mStream.Length;
 
+        public override long ExpectedSize { get; set; }
+
         public override long Position
         {
-            get => mStream?.Position ?? 0;
-            set =>  mStream.Position = value;
+            get => mStream.Position;
+            set => mStream.Position = value;
         }
 
         public DownloadStream(Stream stream, Action<long, long> progress)
         {
             mStream = stream;
-            mExpectedSize = 0;
             mProgress = progress;
         }
 
@@ -53,14 +51,8 @@ namespace RXDKNeighborhood
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (Position == 0)
-            {
-                mExpectedSize = BitConverter.ToUInt32(buffer, offset);
-                offset += 4;
-                count -= 4;
-            }
             mStream.Write(buffer, offset, count);
-            mProgress.Invoke(mStream.Position, mExpectedSize);
+            mProgress.Invoke(mStream.Position, ExpectedSize);
         }
     }
 }

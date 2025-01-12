@@ -77,7 +77,92 @@ namespace RXDKXBDM
             return stringBuilder.ToString();
         }
 
-        public async Task<SocketResponse> TryRecieveBodyAsync(CancellationToken? cancellationToken = null, ExpectedSizeStream ? binaryResponseStream = null)
+
+        public byte[] RawBuffer = new byte[1024];
+        public int IndexBiffer = 0;
+        public int CurrentBufferSize = 0;
+
+        public int ReceiveBinary(ref byte[] recieveBuffer)
+        {
+            if (mClient == null)
+            {
+                return -1;
+            }
+
+            byte[] buffer = new byte[recieveBuffer.Length];
+            var bytesRead = mClient.Receive(buffer, 0, buffer.Length, SocketFlags.None, out SocketError socketError);
+            if (bytesRead > 0)
+            {
+                Array.Copy(buffer, 0, recieveBuffer, 0, bytesRead);
+                return bytesRead;
+            }
+
+            if (socketError == SocketError.Interrupted)
+            {
+                return 0;
+            }
+
+            if (socketError == SocketError.WouldBlock)
+            {
+                int timeoutMs = 1000;
+                bool isReady = mClient.Poll(timeoutMs * 5000, SelectMode.SelectRead);
+                if (isReady)
+                {
+                    return 0;
+                }
+            }
+
+            return -1;
+        }
+
+
+        public bool DmReceiveSocketLine(out string response)
+        {
+            response = string.Empty;
+
+            var stringBuilder = new StringBuilder();
+            while (true)
+            {
+                while (IndexBiffer >= CurrentBufferSize)
+                {
+                    IndexBiffer = 0;
+                    CurrentBufferSize = ReceiveBinary(ref RawBuffer);
+                    if (CurrentBufferSize < 0)
+                    {
+                        return false;
+                    }
+                }
+                var currentChar = (char)RawBuffer[IndexBiffer++];
+                if (currentChar == '\r')
+                {
+                    continue;
+                }
+                if (currentChar != '\n')
+                {
+                    stringBuilder.Append(currentChar);
+                    continue;
+                }
+                break;
+            }
+            response = stringBuilder.ToString();
+            return true;
+        }
+
+        public string[] GetMultiLineResponse()
+        {
+            var body = new List<string>();
+            while (true)
+            {
+                if (DmReceiveSocketLine(out var line) == false || line.Equals("."))
+                {
+                    break;
+                }
+                body.Add(line);
+            }
+            return body.ToArray();
+        }
+
+        public SocketResponse TryRecieveHeaderResponse()
         {
             if (mClient == null)
             {
@@ -85,20 +170,11 @@ namespace RXDKXBDM
             }
             try
             {
-                if (WaitAvailable() == false)
-                {
-                    return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Timeout" };
-                }
-
-                var initialReadBuffer = new byte[16384];
-                var initialBytesRead = await mClient.ReceiveAsync(initialReadBuffer);
-                if (initialBytesRead < 5)
+                if (DmReceiveSocketLine(out var header) == false)
                 {
                     return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
                 }
 
-                var initialPosition = 0;
-                var header = ExtractLine(ref initialReadBuffer, initialBytesRead, ref initialPosition);
                 if (header.Substring(3, 2).Equals("- ") == false || int.TryParse(header.AsSpan(0, 3), out var responseCodeInt) == false)
                 {
                     return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
@@ -107,67 +183,7 @@ namespace RXDKXBDM
                 var responseCode = (ResponseCode)responseCodeInt;
                 var response = header.Substring(5);
                 var socketResponse = new SocketResponse { ResponseCode = (ResponseCode)responseCode, Response = response };
-                if (responseCode == ResponseCode.SUCCESS_OK || responseCode == ResponseCode.SUCCESS_CONNECTED)
-                {
-                    return socketResponse;
-                }
-
-                var readBuffer = new byte[16384];
-                if (responseCode == ResponseCode.SUCCESS_MULTIRESPONSE)
-                {
-                    using var stream = new MemoryStream();
-                    stream.Write(initialReadBuffer, initialPosition, initialBytesRead - initialPosition);
-                    while (mClient.Available > 0)
-                    {
-                        var bytesRead = await mClient.ReceiveAsync(readBuffer);
-                        stream.Write(readBuffer, 0, bytesRead);
-                    }
-
-                    var body = new List<string>();
-                    var multiLineBuffer = stream.ToArray();
-                    var multiLineBufferPosition = 0;
-                    while (multiLineBufferPosition < multiLineBuffer.Length)
-                    {
-                        var line = ExtractLine(ref multiLineBuffer, multiLineBuffer.Length, ref multiLineBufferPosition);
-                        if (line == ".")
-                        {
-                            break;
-                        }
-                        body.Add(line);
-                    }
-
-                    socketResponse.Body = body.ToArray();
-                    return socketResponse;
-                }
-
-                if (responseCode == ResponseCode.SUCCESS_BINRESPONSE)
-                {
-                    if (binaryResponseStream == null)
-                    {
-                        return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Binary response stream not provided" };
-                    }
-
-                    binaryResponseStream.Write(initialReadBuffer, initialPosition, initialBytesRead - initialPosition);
-                    var expectedSize = binaryResponseStream.ExpectedSize;
-
-                    while (binaryResponseStream.Length != expectedSize)
-                    {
-                        while (mClient.Available > 0)
-                        {
-                            var bytesRead = await mClient.ReceiveAsync(readBuffer);
-                            if (cancellationToken != null && cancellationToken.Value.IsCancellationRequested)
-                            {
-                                FlushIncomingData();
-                                return new SocketResponse { ResponseCode = ResponseCode.SUCCESS_CANCELLED, Response = "Cancelled" };
-                            }
-                            binaryResponseStream.Write(readBuffer, 0, bytesRead);
-                        }
-                    }
-
-                    return new SocketResponse { ResponseCode = ResponseCode.SUCCESS_OK, Response = "OK" };
-                }
-
-                return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
+                return socketResponse;
             }
             catch (Exception ex)
             {
@@ -175,6 +191,124 @@ namespace RXDKXBDM
                 return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Failed process body" };
             }
         }
+
+        public bool TryRecieveBinarySize(out uint size)
+        {
+            size = 0;
+
+            if (mClient == null)
+            {
+                return false;
+            }
+
+            var buffer = new byte[4];
+            for (var i = 0; i < 4; i++)
+            {
+                while (IndexBiffer >= CurrentBufferSize)
+                {
+                    IndexBiffer = 0;
+                    CurrentBufferSize = ReceiveBinary(ref RawBuffer);
+                    if (CurrentBufferSize < 0)
+                    {
+                        return false;
+                    }
+                }
+                buffer[i] = RawBuffer[IndexBiffer++];
+            }
+
+            size = BitConverter.ToUInt32(buffer, 0);
+            return true;
+        }
+
+        public bool TryStreamBinaryData(ExpectedSizeStream expectedSizeStream, CancellationToken cancellationToken)
+        {
+            for (var i = 0; i < expectedSizeStream.ExpectedSize; i++)
+            {
+                while (IndexBiffer >= CurrentBufferSize)
+                {
+                    IndexBiffer = 0;
+                    CurrentBufferSize = ReceiveBinary(ref RawBuffer);
+                    if (CurrentBufferSize < 0)
+                    {
+                        return false;
+                    }
+                }
+                var value = RawBuffer[IndexBiffer++];
+                expectedSizeStream.WriteByte(value);
+            }
+            return true;
+        }
+
+        //public async Task<SocketResponse> TryRecieveBodyAsync(CancellationToken? cancellationToken = null, ExpectedSizeStream ? binaryResponseStream = null)
+        //{
+
+
+            //    if (mClient == null)
+            //    {
+            //        return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Client Not Open" };
+            //    }
+            //    try
+            //    {
+            //        if (DmReceiveSocketLine(out var header) == false)
+            //        {
+            //            return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
+            //        }
+
+            //        if (header.Substring(3, 2).Equals("- ") == false || int.TryParse(header.AsSpan(0, 3), out var responseCodeInt) == false)
+            //        {
+            //            return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
+            //        }
+
+            //        var responseCode = (ResponseCode)responseCodeInt;
+            //        var response = header.Substring(5);
+            //        var socketResponse = new SocketResponse { ResponseCode = (ResponseCode)responseCode, Response = response };
+            //        if (responseCode == ResponseCode.SUCCESS_OK || responseCode == ResponseCode.SUCCESS_CONNECTED)
+            //        {
+            //            return socketResponse;
+            //        }
+
+            //        var readBuffer = new byte[16384];
+            //        if (responseCode == ResponseCode.SUCCESS_MULTIRESPONSE)
+            //        {
+            //            socketResponse.Body = GetMultiLineResponse();
+            //            return socketResponse;
+            //        }
+
+            //        if (responseCode == ResponseCode.SUCCESS_BINRESPONSE)
+            //        {
+            //            if (binaryResponseStream == null)
+            //            {
+            //                return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Binary response stream not provided" };
+            //            }
+
+            //            //binaryResponseStream.Write(initialReadBuffer, initialPosition, initialBytesRead - initialPosition);
+            //            //var expectedSize = binaryResponseStream.ExpectedSize;
+
+            //            //while (binaryResponseStream.Length != expectedSize)
+            //            //{
+            //            //    while (mClient.Available > 0)
+            //            //    {
+            //            //        var bytesRead = await mClient.ReceiveAsync(readBuffer);
+            //            //        if (cancellationToken != null && cancellationToken.Value.IsCancellationRequested)
+            //            //        {
+            //            //            FlushIncomingData();
+            //            //            return new SocketResponse { ResponseCode = ResponseCode.SUCCESS_CANCELLED, Response = "Cancelled" };
+            //            //        }
+            //            //        binaryResponseStream.Write(readBuffer, 0, bytesRead);
+            //            //    }
+            //            //}
+
+            //            return new SocketResponse { ResponseCode = ResponseCode.SUCCESS_OK, Response = "OK" };
+            //        }
+
+            //        return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected Result" };
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Debug.WriteLine(ex.ToString());
+            //        return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Failed process body" };
+            //    }
+            //}
 
         public async void FlushIncomingData()
         {
@@ -220,6 +354,22 @@ namespace RXDKXBDM
             return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Failed to send message" };
         }
 
+        public bool WaitForConnection(TimeSpan timeout)
+        {
+            if (mClient == null)
+            {
+                return false;
+            }
+            try
+            {
+                return mClient.Poll(timeout, SelectMode.SelectWrite);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private async Task<SocketResponse> TryConnectAsync()
         {
             if (mClient == null)
@@ -229,7 +379,10 @@ namespace RXDKXBDM
             try
             {
                 await mClient.ConnectAsync(IPAddress.Parse(mAddress), 731);
-                var response = await TryRecieveBodyAsync();
+
+                WaitForConnection(TimeSpan.FromSeconds(1));
+
+                var response = TryRecieveHeaderResponse();
                 if (response.ResponseCode != ResponseCode.SUCCESS_CONNECTED)
                 {
                     return new SocketResponse { ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR, Response = "Unexpected result" };
@@ -248,10 +401,9 @@ namespace RXDKXBDM
             Close();
 
             mAddress = ipAddress;
-            mClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-            {
-                ReceiveTimeout = 1000
-            };
+            mClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            mClient.Blocking = false;
+
             var response = await TryConnectAsync();
             if (Utils.IsSuccess(response.ResponseCode) == false)
             {
@@ -261,14 +413,6 @@ namespace RXDKXBDM
             return true;
         }
 
-        public bool Connected()
-        {
-            if (mClient == null)
-            {
-                return false;
-            }
-            return mClient.Connected == true;
-        }
 
         public void Close()
         {
@@ -276,14 +420,16 @@ namespace RXDKXBDM
             {
                 return;
             }
-            if (mClient.Connected == true)
+            try
             {
-                //mClient.Send("bye");
                 mClient.Shutdown(SocketShutdown.Both);
-                mClient.Close();
             }
-            mClient.Dispose();
-            mClient = null;
+            finally
+            {
+                mClient.Close();
+                mClient.Dispose();
+                mClient = null;
+            }
         }
     }
 }

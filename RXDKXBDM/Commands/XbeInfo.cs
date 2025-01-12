@@ -9,7 +9,7 @@
             {
                 command += " running";
             }
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var socketResponse = await SendCommandAndGetMultilineResponseAsync(connection, command);
             var commandResponse = new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.BodyToDictionary(socketResponse.Body));
             return commandResponse;
         }
