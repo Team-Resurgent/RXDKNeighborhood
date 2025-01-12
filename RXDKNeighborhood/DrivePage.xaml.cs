@@ -514,6 +514,13 @@ public partial class ConsolePage : ContentPage
                 File.Delete(filename);
             }
         }
+        else
+        {
+            await Launcher.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filename)
+            });
+        }
 
         HideBusy();
     }

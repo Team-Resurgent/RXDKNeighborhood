@@ -356,7 +356,10 @@ namespace RXDKXBDM
             }
             try
             {
-                mClient.Shutdown(SocketShutdown.Both);
+                if (mClient.Connected)
+                {
+                    mClient.Shutdown(SocketShutdown.Both);
+                }
             }
             finally
             {
