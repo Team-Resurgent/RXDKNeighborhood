@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace RXDKXBDM.Commands
+﻿namespace RXDKXBDM.Commands
 {
     public class Download : Command
     {

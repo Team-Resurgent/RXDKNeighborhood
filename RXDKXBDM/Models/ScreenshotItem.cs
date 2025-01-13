@@ -1,6 +1,4 @@
-﻿using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace RXDKXBDM.Models
+﻿namespace RXDKXBDM.Models
 {
     public class ScreenshotItem
     {

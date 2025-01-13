@@ -3,12 +3,19 @@ using RXDKXBDM.Commands;
 using RXDKXBDM.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System.Speech.Recognition;
-using Windows.Globalization;
 using Windows.Storage.Pickers;
 
 namespace RXDKNeighborhood
 {
+    public struct ContentsProgress
+    {
+        public long TotalSize { get; set; }
+
+        public long FilesCount { get; set; }
+
+        public long FolderCount { get; set; }
+    }
+
     public static class Utils
     {
         public static string FormatBytes(long bytes)
@@ -27,9 +34,9 @@ namespace RXDKNeighborhood
             return $"{bytes} bytes";
         }
 
-        public static async Task<DriveItem[]> GetFolderComtents(string sourcefolder, CancellationToken cancellationToken, Action<long> size)
+        public static async Task<DriveItem[]> GetFolderComtents(string sourcefolder, CancellationToken cancellationToken, Action<ContentsProgress>? progress = null)
         {
-            return await Task<DriveItem[]>.Run(() =>
+            return await Task.Run(() =>
             {
                 var scanFolders = new List<string>
                 {
@@ -37,13 +44,15 @@ namespace RXDKNeighborhood
                 };
 
                 var totalSize = (long)0;
+                var fileCount = (long)0;
+                var folderCount = (long)0;
                 var recursiveItems = new List<DriveItem>();
 
                 while (scanFolders.Count > 0)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        return recursiveItems.ToArray();
+                        return [];
                     }
 
                     var dirToList = scanFolders[0] + "\\";
@@ -63,8 +72,15 @@ namespace RXDKNeighborhood
                         }
                         recursiveItems.Add(item);
                         totalSize += item.Size;
-                        size.Invoke(totalSize);
-                        System.Diagnostics.Debug.Print($"{recursiveItems.Count}");
+                        if (item.IsDirectory)
+                        {
+                            folderCount++;
+                        }
+                        else
+                        {
+                            fileCount++;
+                        }
+                        progress?.Invoke(new ContentsProgress { TotalSize = totalSize, FilesCount = fileCount, FolderCount = folderCount });
                     }
                 }
                 return recursiveItems.ToArray();
@@ -129,7 +145,7 @@ namespace RXDKNeighborhood
             });
         }
 
-        private static void AoolyPixelDataToImage(Image<Rgb24> image, uint format, byte[] data)
+        private static void AoolyPixelDataToImage(Image<Rgb24> image, uint pitch, uint format, byte[] data)
         {
             const uint D3DFMT_LIN_A8R8G8B8 = 0x00000012;
             const uint D3DFMT_LIN_X8R8G8B8 = 0x0000001E; 
@@ -142,6 +158,7 @@ namespace RXDKNeighborhood
             {
                 for (var y = 0; y < image.Height; y++)
                 {
+                    dataOffset = (int)(y * pitch);
                     for (var x = 0; x < image.Width; x++)
                     {
                         var b = data[dataOffset + 0];
@@ -156,6 +173,7 @@ namespace RXDKNeighborhood
             {
                 for (var y = 0; y < image.Height; y++)
                 {
+                    dataOffset = (int)(y * pitch);
                     for (var x = 0; x < image.Width; x++)
                     {
                         var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
@@ -174,6 +192,7 @@ namespace RXDKNeighborhood
             {
                 for (var y = 0; y < image.Height; y++)
                 {
+                    dataOffset = (int)(y * pitch);
                     for (var x = 0; x < image.Width; x++)
                     {
                         var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
@@ -206,7 +225,7 @@ namespace RXDKNeighborhood
                     var screenshot = response.ResponseValue;
                     var bytesPerPixel = screenshot.Pitch / screenshot.Width;
                     using var image = new Image<Rgb24>((int)screenshot.Width, (int)screenshot.Height);
-                    AoolyPixelDataToImage(image, screenshot.Forrmat, screenshot.Data);
+                    AoolyPixelDataToImage(image, screenshot.Pitch, screenshot.Forrmat, screenshot.Data);
 
                     try
                     {

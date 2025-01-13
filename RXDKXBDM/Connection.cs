@@ -3,11 +3,10 @@ using System.Net.Sockets;
 using System.Text;
 using System.Diagnostics;
 using RXDKXBDM.Commands;
-using System.Runtime.InteropServices;
 
 namespace RXDKXBDM
 {
-    
+
 
     public class Connection : IDisposable
     {

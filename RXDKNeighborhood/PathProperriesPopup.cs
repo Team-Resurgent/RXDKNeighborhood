@@ -2,6 +2,7 @@ using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls.Shapes;
 using RXDKXBDM.Commands;
 using RXDKXBDM.Models;
+using System.Threading;
 
 namespace RXDKNeighborhood;
 
@@ -9,11 +10,16 @@ public class PathProperriesPopup : Popup
 {
     private DriveItem mDriveItem;
     private Action mNeedsUpdate;
+    private Label mSizeLabel;
+    private Label? mComtentsLabel;
+    private CancellationToken mCancellationToken;
 
     public PathProperriesPopup(DriveItem driveItem, string ipAddress, Action needsUpdate)
     {
         mDriveItem = driveItem;
         mNeedsUpdate = needsUpdate;
+        mComtentsLabel = null;
+        mCancellationToken = new CancellationToken();
 
         var isDarkTheme = AppInfo.RequestedTheme == AppTheme.Dark;
 
@@ -48,9 +54,13 @@ public class PathProperriesPopup : Popup
                 new RowDefinition { Height = GridLength.Auto },
                 new RowDefinition { Height = GridLength.Auto },
                 new RowDefinition { Height = GridLength.Auto }
-
             }
         };
+
+        if (driveItem.IsDirectory)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        }
 
         var consoleIpCaptionLabel = new Label
         {
@@ -118,12 +128,30 @@ public class PathProperriesPopup : Popup
             VerticalOptions = LayoutOptions.Center,
         };
 
-        var sizeLabel = new Label
+        mSizeLabel = new Label
         {
             Text = mDriveItem.Size.ToString("N0") + " bytes",
             HorizontalTextAlignment = TextAlignment.End,
             VerticalOptions = LayoutOptions.Center,
         };
+
+        Label? contentsCaptionLabel = null;
+
+        if (driveItem.IsDirectory)
+        {
+            contentsCaptionLabel = new Label
+            {
+                Text = "Contains:",
+                VerticalOptions = LayoutOptions.Center,
+            };
+
+            mComtentsLabel = new Label
+            {
+                Text = string.Empty,
+                HorizontalTextAlignment = TextAlignment.End,
+                VerticalOptions = LayoutOptions.Center,
+            };
+        }
 
         var separatorLine2 = new BoxView
         {
@@ -192,17 +220,27 @@ public class PathProperriesPopup : Popup
         grid.AddWithSpan(separatorLine1, 3, 0, 1, 2);
         grid.Add(locationCaptionLabel, 0, 4);
         grid.Add(locationLabel, 1, 4);
+
         grid.Add(sizeCaptionLabel, 0, 5);
-        grid.Add(sizeLabel, 1, 5);
-        grid.AddWithSpan(separatorLine2, 6, 0, 1, 2);
-        grid.Add(createdCaptionLabel, 0, 7);
-        grid.Add(createdLabel, 1, 7);
-        grid.Add(modifiedCaptionLabel, 0, 8);
-        grid.Add(modifiedLabel, 1, 8);
-        grid.Add(readonlyCaptionLabel, 0, 9);
-        grid.Add(readonlyCheckbox, 1, 9);
-        grid.Add(hiddenCaptionLabel, 0, 10);
-        grid.Add(hiddenCheckbox, 1, 10);
+        grid.Add(mSizeLabel, 1, 5);
+
+        var rowOffet = 0;
+        if (driveItem.IsDirectory)
+        {
+            grid.Add(contentsCaptionLabel, 0, 6);
+            grid.Add(mComtentsLabel, 1, 6);
+            rowOffet += 1;
+        }
+
+        grid.AddWithSpan(separatorLine2, 6 + rowOffet, 0, 1, 2);
+        grid.Add(createdCaptionLabel, 0, 7 + rowOffet);
+        grid.Add(createdLabel, 1, 7 + rowOffet);
+        grid.Add(modifiedCaptionLabel, 0, 8 + rowOffet);
+        grid.Add(modifiedLabel, 1, 8 + rowOffet);
+        grid.Add(readonlyCaptionLabel, 0, 9 + rowOffet);
+        grid.Add(readonlyCheckbox, 1, 9 + rowOffet);
+        grid.Add(hiddenCaptionLabel, 0, 10 + rowOffet);
+        grid.Add(hiddenCheckbox, 1, 10 + rowOffet);
 
         var okButton = new Button
         {
@@ -215,7 +253,7 @@ public class PathProperriesPopup : Popup
             Close();
         };
 
-        grid.AddWithSpan(okButton, 11, 0, 1, 2);
+        grid.AddWithSpan(okButton, 11 + rowOffet, 0, 1, 2);
 
         var border = new Border
         {
@@ -233,6 +271,25 @@ public class PathProperriesPopup : Popup
             Padding = 10,
             Content = grid   
         };
+
+        if (driveItem.IsDirectory)
+        {
+            Task.Run(() =>
+            {
+                _ = Utils.GetFolderComtents(driveItem.CombinePath(), mCancellationToken, (progress) =>
+                {
+                    if (mComtentsLabel == null)
+                    {
+                        return;
+                    }
+                    Dispatcher.Dispatch(() =>
+                    {
+                        mSizeLabel.Text = Utils.FormatBytes(progress.TotalSize);
+                        mComtentsLabel.Text = $"{progress.FilesCount} Files, {progress.FolderCount} Folders";
+                    });
+                });
+            });
+        }
 
         Content = border;
     }

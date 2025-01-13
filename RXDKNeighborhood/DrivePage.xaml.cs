@@ -360,8 +360,9 @@ public partial class ConsolePage : ContentPage
 
                                 ShowBusy();
 
-                                var x = await Utils.GetFolderComtents(argument, new CancellationToken(), (size) =>
+                                var x = await Utils.GetFolderComtents(argument, new CancellationToken(), (progress) =>
                                 {
+
                                     //NamespaceExtensionSystem.Diagnostics.Debug.Print($"{size}");
                                 });
 
