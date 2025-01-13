@@ -360,11 +360,7 @@ public partial class ConsolePage : ContentPage
 
                                 ShowBusy();
 
-                                var x = await Utils.GetFolderComtents(argument, new CancellationToken(), (progress) =>
-                                {
-
-                                    //NamespaceExtensionSystem.Diagnostics.Debug.Print($"{size}");
-                                });
+                                var driveItems = await Utils.GetFolderComtents(argument, new CancellationToken());
 
                                 //bool success = await Utils.DownloadFolderAsync(argument, "", new CancellationToken(), (step, total) =>
                                 //{
