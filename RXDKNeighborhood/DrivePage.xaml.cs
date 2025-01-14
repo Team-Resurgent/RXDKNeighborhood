@@ -353,14 +353,19 @@ public partial class ConsolePage : ContentPage
                             if (driveItem.IsDirectory)
                             {
                                 var folder = await FolderPicker.Default.PickAsync();
-                                if (folder == null)
+                                if (folder.Folder == null)
                                 {
                                     return;
                                 }
 
                                 ShowBusy();
 
-                                var driveItems = await Utils.GetFolderComtents(argument, new CancellationToken());
+                                var driveItems = await Utils.GetFolderComtents(driveItem, new CancellationToken());
+
+                                HideBusy();
+
+                                var popup = new DownloadPopup(driveItems, folder.Folder.Path);
+                                this.ShowPopup(popup);
 
                                 //bool success = await Utils.DownloadFolderAsync(argument, "", new CancellationToken(), (step, total) =>
                                 //{
@@ -374,8 +379,6 @@ public partial class ConsolePage : ContentPage
                                 //{
                                 //    await DisplayAlert("Error", "Download failed.", "Ok");
                                 //}
-
-                                HideBusy();
                             }
                             else
                             {

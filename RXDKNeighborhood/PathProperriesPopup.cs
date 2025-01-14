@@ -276,7 +276,7 @@ public class PathProperriesPopup : Popup
         {
             Task.Run(() =>
             {
-                _ = Utils.GetFolderComtents(driveItem.CombinePath(), mCancellationToken, (progress) =>
+                _ = Utils.GetFolderComtents(driveItem, mCancellationToken, (progress) =>
                 {
                     if (mComtentsLabel == null)
                     {

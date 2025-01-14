@@ -34,19 +34,22 @@ namespace RXDKNeighborhood
             return $"{bytes} bytes";
         }
 
-        public static async Task<DriveItem[]> GetFolderComtents(string sourcefolder, CancellationToken cancellationToken, Action<ContentsProgress>? progress = null)
+        public static async Task<DriveItem[]> GetFolderComtents(DriveItem sourceItem, CancellationToken cancellationToken, Action<ContentsProgress>? progress = null)
         {
             return await Task.Run(() =>
             {
                 var scanFolders = new List<string>
                 {
-                    sourcefolder
+                    sourceItem.CombinePath()
                 };
 
                 var totalSize = (long)0;
                 var fileCount = (long)0;
                 var folderCount = (long)0;
-                var recursiveItems = new List<DriveItem>();
+                var recursiveItems = new List<DriveItem>
+                {
+                    sourceItem
+                };
 
                 while (scanFolders.Count > 0)
                 {
@@ -89,7 +92,7 @@ namespace RXDKNeighborhood
 
         public static async Task<bool> DownloadFolderAsync(string sourcefolder, string destfolder, CancellationToken cancellationToken, Action<long, long> progress)
         {
-            return await Task<bool>.Run(() =>
+            return await Task.Run(() =>
             {
                 var scanFolders = new List<string>();
                 scanFolders.Add(sourcefolder);
@@ -130,7 +133,7 @@ namespace RXDKNeighborhood
 
         public static async Task<bool> DownloadFileAsync(string sourcefile, string destfile, CancellationToken cancellationToken, Action<long, long> progress)
         {
-            return await Task<bool>.Run(() =>
+            return await Task.Run(() =>
             {
                 using (var fileStream = new FileStream(destfile, FileMode.Create))
                 using (var downloadStream = new DownloadStream(fileStream, progress))
