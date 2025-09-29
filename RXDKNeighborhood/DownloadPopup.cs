@@ -12,13 +12,13 @@ public class DownloadPopup : Popup
     private string mFolder;
     private Label mItemsRemainingLabel;
     private Label mDownloadingLabel;
-    private CancellationToken mCancellationToken;
+    private CancellationTokenSource mCancellationTokenSource;
 
     public DownloadPopup(DriveItem[] driveItems, string folder)
     {
         mDriveItems = driveItems.ToList();
         mFolder = folder;
-        mCancellationToken = new CancellationToken();
+        mCancellationTokenSource = new CancellationTokenSource();
 
         var isDarkTheme = AppInfo.RequestedTheme == AppTheme.Dark;
 
@@ -89,24 +89,10 @@ public class DownloadPopup : Popup
         };
         okButton.Clicked += (sender, e) =>
         {
-            Close();
+            mCancellationTokenSource.Cancel();
         };
 
-        var retryButton = new Button
-        {
-            Text = "Retry",
-            Margin = new Thickness(0, 10, 0, 0),
-            HorizontalOptions = LayoutOptions.Start
-        };
-        retryButton.Clicked += RetryButton_Clicked;
-
-        var stack = new HorizontalStackLayout
-        {
-            okButton,
-            retryButton
-        };
-
-        grid.AddWithSpan(stack, 2, 0, 1, 2);
+        grid.AddWithSpan(okButton, 2, 0, 1, 2);
 
         var border = new Border
         {
@@ -125,6 +111,13 @@ public class DownloadPopup : Popup
             Content = grid   
         };
 
+        Content = border;
+
+        DownloadItems();
+    }
+
+    private void DownloadItems()
+    {
         Task.Run(() =>
         {
             if (mDriveItems.Count == 0)
@@ -132,12 +125,16 @@ public class DownloadPopup : Popup
                 return;
             }
 
+            var cancellationToken = mCancellationTokenSource.Token;
             var sourceBase = mDriveItems[0].Path;
-            //var rootFolder = mDriveItems[0].Name;
-            //var destBase = "G:\\Test";
 
             while (mDriveItems.Count() > 0)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 var driveItem = mDriveItems[0];
 
                 var folder = driveItem.CombinePath();
@@ -151,7 +148,7 @@ public class DownloadPopup : Popup
                         mDownloadingLabel.Text = driveItem.Name;
                     });
 
-                    var success = Utils.DownloadFileAsync(driveItem.CombinePath(), destPath, mCancellationToken, (step, size) =>
+                    var success = Utils.DownloadFileAsync(driveItem.CombinePath(), destPath, cancellationToken, (step, size) =>
                     {
                         //Dispatcher.Dispatch(() =>
                         //{
@@ -166,7 +163,11 @@ public class DownloadPopup : Popup
                     }
                     else
                     {
-                        // Retry
+                        bool retry =  Shell.Current.DisplayAlert("Connection Error", "Unable to connect. Would you like to retry?", "Retry", "Cancel").Result;
+                        if (!retry)
+                        {
+                            continue;
+                        }
                         break;
                     }
                 }
@@ -187,12 +188,5 @@ public class DownloadPopup : Popup
                 Close();
             });
         });
-
-        Content = border;
-    }
-
-    private void RetryButton_Clicked(object? sender, EventArgs e)
-    {
-        throw new NotImplementedException();
     }
 }
