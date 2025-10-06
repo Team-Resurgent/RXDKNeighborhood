@@ -22,6 +22,7 @@
     <DockPanel LastChildFill="True">
         <DockPanel DockPanel.Dock="Top" LastChildFill="True" Margin="10,10,10,10">
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <Button ToolTip.Tip="Discover" IsEnabled="{Binding CanDiscover}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xf04e;" Click="Discover_Click"/>
                 <Button ToolTip.Tip="Reboot" IsEnabled="{Binding CanReboot}" Height="40" FontSize="20" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe8ac;">
                     <Button.Flyout>
                         <MenuFlyout>
@@ -68,6 +69,7 @@
                             <Border.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem IsVisible="{Binding CanRemove}" Header="Delete" Click="RemoveXbox_Click"/>
+                                    <MenuItem IsVisible="{Binding CanDiscover}" Header="Discover" Click="Discover_Click"/>
                                     <MenuItem IsVisible="{Binding CanReboot}" Header="Reboot">
                                         <MenuItem Header="Warm" Click="WarmReboot_Click" />
                                         <MenuItem Header="Warm to Active Title" Click="WarmRebootTitle_Click" />

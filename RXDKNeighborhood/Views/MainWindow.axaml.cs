@@ -107,6 +107,15 @@ namespace RXDKNeighborhood.Views
             vm.Back();
         }
 
+        private void Discover_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainWindowViewModel vm)
+            {
+                return;
+            }
+            vm.Discover();
+        }
+
         private void RemoveXbox_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
@@ -115,6 +124,7 @@ namespace RXDKNeighborhood.Views
             }
             vm.RemoveXbox(item);
         }
+
 
         private void WarmReboot_Click(object? sender, RoutedEventArgs e)
         {

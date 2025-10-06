@@ -34,6 +34,7 @@ namespace RXDKNeighborhood.ViewModels
                 if (changed)
                 {
                     this.RaisePropertyChanged(nameof(CanReboot));
+                    this.RaisePropertyChanged(nameof(CanDiscover));
                     this.RaisePropertyChanged(nameof(CanScreenshot));
                     this.RaisePropertyChanged(nameof(CanSynchronizeTime));
                     this.RaisePropertyChanged(nameof(CanCreateDirectory));
@@ -45,6 +46,8 @@ namespace RXDKNeighborhood.ViewModels
         }
 
         public bool CanReboot => CurrentPath.Length > 0;
+
+        public bool CanDiscover => CurrentPath.Length == 0;
 
         public bool CanScreenshot => CurrentPath.Length > 0;
 
@@ -380,6 +383,21 @@ namespace RXDKNeighborhood.ViewModels
         public void Back()
         {
             CurrentPath = CurrentPath.ParentXboxPath();
+            PopulateConsoleItems();
+        }
+
+        public void Discover()
+        {
+            var xboxItems = XboxDiscovery.Discover();
+            foreach (var xboxItem in xboxItems)
+            {
+                if (Config.XboxItemList.Any(x => x.IpAddress == xboxItem.IpAddress))
+                {
+                    continue;
+                }
+                Config.XboxItemList.Add(xboxItem);
+            }
+            Config.TrySaveConfig(Config);
             PopulateConsoleItems();
         }
 

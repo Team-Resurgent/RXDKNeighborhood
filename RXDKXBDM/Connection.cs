@@ -35,49 +35,6 @@ namespace RXDKXBDM
             disposed = true;
         }
 
-        private bool WaitAvailable()
-        {
-            if (mClient == null)
-            {
-                return false;
-            }
-
-            int count = 0;
-            while (mClient.Available == 0)
-            {
-                if (count == 5)
-                {
-                    return false;
-                }
-                Thread.Sleep(1000);
-                count++;
-
-            }
-
-            return true;
-        }
-
-        private string ExtractLine(ref byte[] buffer, int bufferLen, ref int position)
-        {
-            var stringBuilder = new StringBuilder();
-            while (position < bufferLen) 
-            {
-                var currentChar = (char)buffer[position];
-                position++;
-                if (currentChar == '\r')
-                {
-                    continue;
-                }
-                if (currentChar == '\n')
-                {
-                    break;
-                }
-                stringBuilder.Append(currentChar);
-            }
-            return stringBuilder.ToString();
-        }
-
-
         public byte[] RawBuffer = new byte[1024];
         public int IndexBiffer = 0;
         public int CurrentBufferSize = 0;
@@ -370,7 +327,7 @@ namespace RXDKXBDM
             }
         }
 
-        private async Task<SocketResponse> TryConnectAsync()
+        private async Task<SocketResponse> TryConnectAsync(int timeoutMs = 1000)
         {
             if (mClient == null)
             {
@@ -380,7 +337,7 @@ namespace RXDKXBDM
             {
                 await mClient.ConnectAsync(IPAddress.Parse(mAddress), 731);
 
-                WaitForConnection(TimeSpan.FromSeconds(1));
+                WaitForConnection(TimeSpan.FromMilliseconds(timeoutMs));
 
                 var response = TryRecieveHeaderResponse();
                 if (response.ResponseCode != ResponseCode.SUCCESS_CONNECTED)
@@ -396,7 +353,7 @@ namespace RXDKXBDM
             }
         }
 
-        public async Task<bool> OpenAsync(string ipAddress)
+        public async Task<bool> OpenAsync(string ipAddress, int timeoutMs = 1000)
         {
             Close();
 
@@ -404,7 +361,7 @@ namespace RXDKXBDM
             mClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             mClient.Blocking = false;
 
-            var response = await TryConnectAsync();
+            var response = await TryConnectAsync(timeoutMs);
             if (Utils.IsSuccess(response.ResponseCode) == false)
             {
                 Close();

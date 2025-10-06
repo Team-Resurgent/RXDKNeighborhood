@@ -53,6 +53,7 @@ namespace RXDKNeighborhood.ViewModels
                 if (changed)
                 {
                     this.RaisePropertyChanged(nameof(CanRemove));
+                    this.RaisePropertyChanged(nameof(CanDiscover));
                     this.RaisePropertyChanged(nameof(CanReboot));
                     this.RaisePropertyChanged(nameof(CanScreenshot));
                     this.RaisePropertyChanged(nameof(CanSynchronizeTime));
@@ -71,6 +72,14 @@ namespace RXDKNeighborhood.ViewModels
             get
             {
                 return Type == ConsoleItemType.Xbox;
+            }
+        }
+
+        public bool CanDiscover
+        {
+            get
+            {
+                return Type == ConsoleItemType.AddXbox;
             }
         }
 

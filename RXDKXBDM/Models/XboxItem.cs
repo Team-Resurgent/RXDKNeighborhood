@@ -1,4 +1,4 @@
-﻿namespace RXDKNeighborhood.Models
+﻿namespace RXDKXBDM.Models
 {
     public class XboxItem
     {
