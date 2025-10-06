@@ -1,51 +1,55 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <AssemblyName>rxdkneighborhood</AssemblyName>
+        <SelfContained>true</SelfContained>
+        <TrimUnusedDependencies>false</TrimUnusedDependencies>
+        <PublishReadyToRun>true</PublishReadyToRun>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.7" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.7" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.7" />
-    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.7">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.7" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.7" />
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.7">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.7" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RXDKXBDM\RXDKXBDM.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\RXDKXBDM\RXDKXBDM.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Views\AlertDialogWindow.axaml.cs">
-      <DependentUpon>AlertDialogWindow.axaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\FilePropertiesWindow.axaml.cs">
-      <DependentUpon>FilePropertiesWindow.axaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\DirectoryPropertiesWindow.axaml.cs">
-      <DependentUpon>DirectoryPropertiesWindow.axaml</DependentUpon>
-    </Compile>
-    <Compile Update="Views\ConfirmDialogWindow.axaml.cs">
-      <DependentUpon>ConfirmDialogWindow.axaml</DependentUpon>
-    </Compile>
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Update="Views\AlertDialogWindow.axaml.cs">
+            <DependentUpon>AlertDialogWindow.axaml</DependentUpon>
+        </Compile>
+        <Compile Update="Views\FilePropertiesWindow.axaml.cs">
+            <DependentUpon>FilePropertiesWindow.axaml</DependentUpon>
+        </Compile>
+        <Compile Update="Views\DirectoryPropertiesWindow.axaml.cs">
+            <DependentUpon>DirectoryPropertiesWindow.axaml</DependentUpon>
+        </Compile>
+        <Compile Update="Views\ConfirmDialogWindow.axaml.cs">
+            <DependentUpon>ConfirmDialogWindow.axaml</DependentUpon>
+        </Compile>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Assets\NewFolder\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Assets\NewFolder\" />
+    </ItemGroup>
 </Project>
