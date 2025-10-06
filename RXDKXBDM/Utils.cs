@@ -1,4 +1,6 @@
 ﻿using RXDKXBDM.Commands;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
 
 namespace RXDKXBDM
 {
@@ -142,6 +144,100 @@ namespace RXDKXBDM
             return result;
         }
 
+        private static void AoolyPixelDataToImage(Image<Rgb24> image, uint pitch, uint format, byte[] data)
+        {
+            const uint D3DFMT_LIN_A8R8G8B8 = 0x00000012;
+            const uint D3DFMT_LIN_X8R8G8B8 = 0x0000001E;
+            const uint D3DFMT_LIN_R5G6B5 = 0x00000011;
+            const uint D3DFMT_LIN_X1R5G5B5 = 0x0000001C;
 
+            var dataOffset = 0;
+
+            if (format == D3DFMT_LIN_A8R8G8B8 || format == D3DFMT_LIN_X8R8G8B8)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    dataOffset = (int)(y * pitch);
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var b = data[dataOffset + 0];
+                        var g = data[dataOffset + 1];
+                        var r = data[dataOffset + 2];
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 4;
+                    }
+                }
+            }
+            else if (format == D3DFMT_LIN_R5G6B5)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    dataOffset = (int)(y * pitch);
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
+                        var tempR = (temp >> 11) & 0x1F;
+                        var tempG = (temp >> 5) & 0x3F;
+                        var tempB = temp & 0x1F;
+                        var r = (byte)((tempR << 3) | (tempR >> 2));
+                        var g = (byte)((tempG << 2) | (tempG >> 4));
+                        var b = (byte)((tempB << 3) | (tempB >> 2));
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 2;
+                    }
+                }
+            }
+            else if (format == D3DFMT_LIN_X1R5G5B5)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    dataOffset = (int)(y * pitch);
+                    for (var x = 0; x < image.Width; x++)
+                    {
+                        var temp = (ushort)(data[dataOffset + 0] << 8 | data[dataOffset + 1]);
+                        var tempR = (temp >> 10) & 0x1F;
+                        var tempG = (temp >> 5) & 0x1F;
+                        var tempB = temp & 0x1F;
+                        var r = (byte)((tempR << 3) | (tempR >> 2));
+                        var g = (byte)((tempG << 3) | (tempG >> 2));
+                        var b = (byte)((tempB << 3) | (tempB >> 2));
+                        image[x, y] = new Rgb24(r, g, b);
+                        dataOffset += 2;
+                    }
+                }
+            }
+        }
+
+        public static async Task<bool> DownloadScreenshotAsync(Connection connection, string destfile, CancellationToken cancellationToken)
+        {
+            return await Task.Run(() =>
+            {
+                using (var memoryStream = new MemoryStream())
+                using (var downloadStream = new DownloadStream(memoryStream))
+                {
+                    var response = Screenshot.SendAsync(connection, cancellationToken, downloadStream).Result;
+                    if (!IsSuccess(response.ResponseCode))
+                    {
+                        return false;
+                    }
+
+                    var screenshot = response.ResponseValue;
+                    var bytesPerPixel = screenshot.Pitch / screenshot.Width;
+                    using var image = new Image<Rgb24>((int)screenshot.Width, (int)screenshot.Height);
+                    AoolyPixelDataToImage(image, screenshot.Pitch, screenshot.Forrmat, screenshot.Data);
+
+                    try
+                    {
+                        image.Save(destfile);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+
+                }
+                return true;
+            });
+        }
     }
 }

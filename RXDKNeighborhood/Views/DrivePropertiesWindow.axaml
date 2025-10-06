@@ -1,0 +1,67 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:RXDKNeighborhood.ViewModels"
+        xmlns:controls="clr-namespace:RXDKNeighborhood.Controls"
+        SizeToContent="WidthAndHeight"
+        x:Class="RXDKNeighborhood.DrivePropertiesWindow"
+        x:DataType="vm:DrivePropertiesWindowViewModel"
+        Padding="20"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="{Binding Title}">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:DrivePropertiesWindowViewModel/>
+    </Design.DataContext>
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label Grid.Column="0" Grid.Row="0" VerticalAlignment="Top" FontSize="30" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xf80e;" />
+        <Label Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Content="Drive:"/>
+        <Label Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" Content="{Binding Drive}"/>
+
+        <Label Grid.Column="1" Grid.Row="1" VerticalAlignment="Top" Content="Type:"/>
+        <Label Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" Content="{Binding Type}"/>
+
+        <Border Grid.Column="0" Grid.Row="2" VerticalAlignment="Center" Width="20" Height="20" Background="Blue" BorderBrush="Gray" BorderThickness="1"/>
+        <Label Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Content="Used Space:"/>
+        <Label Grid.Column="2" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding UsedSpaceBytesFormatted}"/>
+        <Label Grid.Column="3" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding UsedSpaceFormatted}"/>
+
+        <Border Grid.Column="0" Grid.Row="3" VerticalAlignment="Center" Width="20" Height="20" Background="Magenta" BorderBrush="Gray" BorderThickness="1"/>
+        <Label Grid.Column="1" Grid.Row="3" VerticalAlignment="Center" Content="Free Space:"/>
+        <Label Grid.Column="2" Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding FreeSpaceBytesFormatted}"/>
+        <Label Grid.Column="3" Grid.Row="3" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding FreeSpaceFormatted}"/>
+        
+        <Separator Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="4"/>
+        
+        <Label Grid.Column="1" Grid.Row="5" VerticalAlignment="Center" Content="Capacity:"/>
+        <Label Grid.Column="2" Grid.Row="5" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding CapacitySpaceBytesFormatted}"/>
+        <Label Grid.Column="3" Grid.Row="5" HorizontalAlignment="Right" VerticalAlignment="Center" Content="{Binding CapacitySpaceFormatted}"/>
+
+        <controls:DriveSpacePieControl Grid.Column="0" Grid.Row="6" Grid.ColumnSpan="4" HorizontalAlignment="Center" Width="200" Height="100" UsedBytesColor="Blue" FreeBytesColor="Magenta" UsedBytes="{Binding UsedSpaceBytes}" FreeBytes="{Binding FreeSpaceBytes}"/>
+
+        <Separator Grid.Column="0" Grid.Row="7" Grid.ColumnSpan="4"/>
+
+        <Button Grid.Column="0" Grid.Row="8" Grid.ColumnSpan="4" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Content="OK" Width="80" IsDefault="True" Command="{Binding OkCommand}"/>
+    </Grid>
+</Window>

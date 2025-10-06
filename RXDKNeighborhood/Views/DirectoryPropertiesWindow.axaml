@@ -1,0 +1,73 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:RXDKNeighborhood.ViewModels"
+        xmlns:controls="clr-namespace:RXDKNeighborhood.Controls"
+        SizeToContent="WidthAndHeight"
+        x:Class="RXDKNeighborhood.DirectoryPropertiesWindow"
+        x:DataType="vm:DirectoryPropertiesWindowViewModel"
+        Padding="20"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="{Binding Title}">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:DirectoryPropertiesWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label Grid.Column="0" Grid.Row="0" VerticalAlignment="Top" FontSize="30" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe2c7;" />
+        <TextBox Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" IsReadOnly="True" Text="{Binding FolderName}"/>
+
+        <Label Grid.Column="0" Grid.Row="1" Content="Type:"/>
+        <Label Grid.Column="1" Grid.Row="1" Content="File Folder"/>
+
+        <Label Grid.Column="0" Grid.Row="2" Content="Location"/>
+        <Label Grid.Column="1" Grid.Row="2" Content="{Binding Location}"/>
+
+        <Label Grid.Column="0" Grid.Row="3" Content="Size:"/>
+        <Label Grid.Column="1" Grid.Row="3" Content="{Binding Size}"/>
+
+        <Label Grid.Column="0" Grid.Row="4" Content="Contains:"/>
+        <Label Grid.Column="1" Grid.Row="4" Content="{Binding Contains}"/>
+        
+        <Separator Grid.Column="0" Grid.Row="5" Grid.ColumnSpan="4"/>
+
+        <Label Grid.Column="0" Grid.Row="6" Content="Created:"/>
+        <Label Grid.Column="1" Grid.Row="6" Content="{Binding Created}"/>
+        
+        <Separator Grid.Column="0" Grid.Row="7" Grid.ColumnSpan="4"/>
+
+        <Label Grid.Column="0" Grid.Row="8" VerticalAlignment="Center" Content="Attributes:"/>
+        <StackPanel Grid.Column="1" Grid.Row="8" Orientation="Horizontal" Spacing="10">
+            <CheckBox Content="Read-Only" IsChecked="{Binding ReadOnly}"/>
+            <CheckBox Content="Hidden" IsChecked="{Binding Hidden}"/>
+        </StackPanel>
+
+        <Separator Grid.Column="0" Grid.Row="9" Grid.ColumnSpan="4"/>
+
+        <StackPanel Grid.Column="0" Grid.Row="10" Grid.ColumnSpan="4" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="10">
+            <Button HorizontalContentAlignment="Center" Content="OK" Width="80" IsDefault="True" Command="{Binding OkCommand}"/>
+            <Button HorizontalContentAlignment="Center" Content="Cancel" Width="80" IsDefault="True" Command="{Binding CancelCommand}"/>
+        </StackPanel>
+    </Grid>
+</Window>

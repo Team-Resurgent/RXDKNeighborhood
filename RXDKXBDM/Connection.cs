@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Diagnostics;
 using RXDKXBDM.Commands;
+using System;
 
 namespace RXDKXBDM
 {
@@ -81,6 +82,15 @@ namespace RXDKXBDM
         public int IndexBiffer = 0;
         public int CurrentBufferSize = 0;
 
+        public async void FlushReceiveBuffer()
+        {
+            if (mClient == null)
+            {
+                return;
+            }
+            await OpenAsync(mAddress);
+        }
+
         public int ReceiveBinary(ref byte[] recieveBuffer)
         {
             if (mClient == null)
@@ -114,6 +124,36 @@ namespace RXDKXBDM
             return -1;
         }
 
+        public int SendBinary(ref byte[] sendBuffer, int offset, int length)
+        {
+            if (mClient == null)
+            {
+                return -1;
+            }
+
+            var bytesWritten = mClient.Send(sendBuffer, offset, length, SocketFlags.None, out SocketError socketError);
+            if (bytesWritten > 0)
+            {
+                return bytesWritten;
+            }
+
+            if (socketError == SocketError.Interrupted)
+            {
+                return 0;
+            }
+
+            if (socketError == SocketError.WouldBlock)
+            {
+                int timeoutMs = 1000;
+                bool isReady = mClient.Poll(timeoutMs * 5000, SelectMode.SelectWrite);
+                if (isReady)
+                {
+                    return 0;
+                }
+            }
+
+            return -1;
+        }
 
         public bool TryRecieveLine(out string line)
         {
@@ -219,13 +259,13 @@ namespace RXDKXBDM
             return true;
         }
 
-        public bool TryStreamBinaryData(ExpectedSizeStream expectedSizeStream, CancellationToken cancellationToken)
+        public bool TryRecieveStreamBinaryData(ExpectedSizeStream expectedSizeStream, CancellationToken cancellationToken)
         {
             for (var i = 0; i < expectedSizeStream.ExpectedSize; i++)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    //todo: close and open stream to flush out data
+                    FlushReceiveBuffer();
                     return false;
                 }
                 while (IndexBiffer >= CurrentBufferSize)
@@ -239,6 +279,33 @@ namespace RXDKXBDM
                 }
                 var value = RawBuffer[IndexBiffer++];
                 expectedSizeStream.WriteByte(value);
+            }
+            return true;
+        }
+
+
+        public bool TrySendStreamBinaryData(ExpectedSizeStream expectedSizeStream, CancellationToken cancellationToken)
+        {
+            const int bufferSize = 32768;
+            byte[] buffer = new byte[bufferSize];
+            var bytesRead = expectedSizeStream.Read(buffer, 0, bufferSize);
+            while (bytesRead > 0)
+            {
+                int offset = 0;
+                while (offset < bytesRead)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return false;
+                    }
+                    int written = SendBinary(ref buffer, offset, bytesRead - offset);
+                    if (written < 0)
+                    {
+                        return false;
+                    }
+                    offset += written;
+                }
+                bytesRead = expectedSizeStream.Read(buffer, 0, bufferSize);
             }
             return true;
         }

@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.10.35013.160
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKXBDM", "RXDKXBDM\RXDKXBDM.csproj", "{112E3C26-D268-456A-BD44-547E61ED8BF1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKNeighborhood", "RXDKNeighborhood\RXDKNeighborhood.csproj", "{99D33ECA-CD87-4185-81B8-172F7E0ED521}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKNeighborhood", "RXDKNeighborhood\RXDKNeighborhood.csproj", "{0746237E-0537-442B-AE4C-808BB2A84AD9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKXBDM", "RXDKXBDM\RXDKXBDM.csproj", "{8A626D17-3AB4-45BE-BDD4-ADF75CE8F45E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0FEBCD2F-0878-420E-B5ED-03463027FF03}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B73C0F77-BD72-4D75-90EF-1A2787EBF874}"
 	ProjectSection(SolutionItems) = preProject
-		Notes.txt = Notes.txt
-		XBDM commands by version - xboxdevwiki.pdf = XBDM commands by version - xboxdevwiki.pdf
-		Xbox Debug Monitor - xboxdevwiki.pdf = Xbox Debug Monitor - xboxdevwiki.pdf
+		Notes\Notes.txt = Notes\Notes.txt
+		Notes\XBDM commands by version - xboxdevwiki.pdf = Notes\XBDM commands by version - xboxdevwiki.pdf
+		Notes\Xbox Debug Monitor - xboxdevwiki.pdf = Notes\Xbox Debug Monitor - xboxdevwiki.pdf
 	EndProjectSection
 EndProject
 Global
@@ -20,20 +20,16 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{112E3C26-D268-456A-BD44-547E61ED8BF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{112E3C26-D268-456A-BD44-547E61ED8BF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{112E3C26-D268-456A-BD44-547E61ED8BF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{112E3C26-D268-456A-BD44-547E61ED8BF1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0746237E-0537-442B-AE4C-808BB2A84AD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0746237E-0537-442B-AE4C-808BB2A84AD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0746237E-0537-442B-AE4C-808BB2A84AD9}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{0746237E-0537-442B-AE4C-808BB2A84AD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0746237E-0537-442B-AE4C-808BB2A84AD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99D33ECA-CD87-4185-81B8-172F7E0ED521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99D33ECA-CD87-4185-81B8-172F7E0ED521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99D33ECA-CD87-4185-81B8-172F7E0ED521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99D33ECA-CD87-4185-81B8-172F7E0ED521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A626D17-3AB4-45BE-BDD4-ADF75CE8F45E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A626D17-3AB4-45BE-BDD4-ADF75CE8F45E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A626D17-3AB4-45BE-BDD4-ADF75CE8F45E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A626D17-3AB4-45BE-BDD4-ADF75CE8F45E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {47D64DE9-E5EC-4B3A-9580-431D8C9A2581}
 	EndGlobalSection
 EndGlobal

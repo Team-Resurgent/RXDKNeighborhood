@@ -1,6 +1,6 @@
 ﻿namespace RXDKXBDM
 {
-    public class DownloadStream : ExpectedSizeStream
+    public class UploadStream : ExpectedSizeStream
     {
         private Stream mStream;
         private Action<long, long>? mProgress;
@@ -21,13 +21,13 @@
             set => mStream.Position = value;
         }
 
-        public DownloadStream(Stream stream)
+        public UploadStream(Stream stream)
         {
             mStream = stream;
             mProgress = null;
         }
 
-        public DownloadStream(Stream stream, Action<long, long> progress)
+        public UploadStream(Stream stream, Action<long, long> progress)
         {
             mStream = stream;
             mProgress = progress;
@@ -38,9 +38,20 @@
             mStream.Flush();
         }
 
+        private DateTime _lastProgressUpdate = DateTime.MinValue;
+
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return mStream.Read(buffer, offset, count);
+            var result = mStream.Read(buffer, offset, count);
+
+            var now = DateTime.UtcNow;
+            if ((now - _lastProgressUpdate).TotalSeconds >= 1)
+            {
+                _lastProgressUpdate = now;
+                mProgress?.Invoke(mStream.Position, ExpectedSize);
+            }
+
+            return result;
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -53,18 +64,10 @@
             mStream.SetLength(value);
         }
 
-        private DateTime _lastProgressUpdate = DateTime.MinValue;
-
         public override void Write(byte[] buffer, int offset, int count)
         {
             mStream.Write(buffer, offset, count);
-
-            var now = DateTime.UtcNow;
-            if ((now - _lastProgressUpdate).TotalSeconds >= 1)
-            {
-                _lastProgressUpdate = now;
-                mProgress?.Invoke(mStream.Position, ExpectedSize);
-            }
+            mProgress?.Invoke(mStream.Position, ExpectedSize);
         }
     }
 }

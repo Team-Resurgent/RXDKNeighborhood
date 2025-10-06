@@ -22,7 +22,13 @@ namespace RXDKXBDM.Commands
             {
                 return new MultiLineSocketResponse(sendResponse);
             }
+
             var recieveHeaderResponse = connection.TryRecieveHeaderResponse();
+            if (recieveHeaderResponse.ResponseCode == ResponseCode.SUCCESS_OK)
+            {
+                return new MultiLineSocketResponse(recieveHeaderResponse);
+            }
+
             if (recieveHeaderResponse.ResponseCode != ResponseCode.SUCCESS_MULTIRESPONSE)
             {
                 return new MultiLineSocketResponse(sendResponse) { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
@@ -51,7 +57,28 @@ namespace RXDKXBDM.Commands
 
             expectedSizeStream.ExpectedSize = expectedSize;
 
-            if (connection.TryStreamBinaryData(expectedSizeStream, cancellationToken) == false)
+            if (connection.TryRecieveStreamBinaryData(expectedSizeStream, cancellationToken) == false)
+            {
+                return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
+            }
+
+            return new SocketResponse { Response = "OK", ResponseCode = ResponseCode.SUCCESS_OK };
+        }
+
+        internal static async Task<SocketResponse> SendCommandAndSetBinaryResponseAsync(Connection connection, string command, CancellationToken cancellationToken, ExpectedSizeStream expectedSizeStream)
+        {
+            var sendResponse = await connection.TrySendStringAsync($"{command}\r\n");
+            if (Utils.IsSuccess(sendResponse.ResponseCode) == false)
+            {
+                return sendResponse;
+            }
+            var recieveHeaderResponse = connection.TryRecieveHeaderResponse();
+            if (recieveHeaderResponse.ResponseCode != ResponseCode.SUCCESS_READYFORBIN)
+            {
+                return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
+            }
+
+            if (connection.TrySendStreamBinaryData(expectedSizeStream, cancellationToken) == false)
             {
                 return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
             }
@@ -85,7 +112,7 @@ namespace RXDKXBDM.Commands
             using var downloadStream = new DownloadStream(memoryStream);
             downloadStream.ExpectedSize = frameBufferSize;
 
-            if (connection.TryStreamBinaryData(downloadStream, cancellationToken) == false)
+            if (connection.TryRecieveStreamBinaryData(downloadStream, cancellationToken) == false)
             {
                 return new ScreenshotSocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
             }

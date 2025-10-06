@@ -1,15 +1,18 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace RXDKNeighborhood.Models
 {
 
     public class Config
     {
-        public List<ConsoleDetail> ConsoleDetailList { get; set; }
+        public List<XboxItem> XboxItemList { get; set; }
 
         public Config()
         {
-            ConsoleDetailList = [];
+            XboxItemList = [];
         }
 
         private static bool TryGetApplicationPath(ref string applicationPath)
@@ -30,16 +33,18 @@ namespace RXDKNeighborhood.Models
             return true;
         }
 
-        public static bool TryLoadConfig(ref Config config)
+        public static bool TryLoadConfig(out Config? config)
         {
             string applicationPath = string.Empty;
             if (TryGetApplicationPath(ref applicationPath) == false)
             {
+                config = null;
                 return false;
             }
             var configPath = Path.Combine(applicationPath, "config.json");
             if (!File.Exists(configPath))
             {
+                config = null;
                 return false;
             }
 
@@ -47,6 +52,7 @@ namespace RXDKNeighborhood.Models
             var deserializedConfig = JsonSerializer.Deserialize<Config>(configJson);
             if (deserializedConfig == null)
             {
+                config = null;
                 return false;
             }
 

@@ -1,4 +1,6 @@
-﻿namespace RXDKXBDM.Models
+﻿using System.IO;
+
+namespace RXDKXBDM.Models
 {
     public class ScreenshotItem
     {

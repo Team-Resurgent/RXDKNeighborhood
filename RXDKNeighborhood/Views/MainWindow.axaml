@@ -1,0 +1,101 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RXDKNeighborhood.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="RXDKNeighborhood.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        DragDrop.AllowDrop="True"
+        DragDrop.DragEnter="OnDragEnter"
+        DragDrop.DragOver="OnDragOver"
+        DragDrop.Drop="OnDrop"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="RXDKNeighborhood">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <DockPanel LastChildFill="True">
+        <DockPanel DockPanel.Dock="Top" LastChildFill="True" Margin="10,10,10,10">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <Button ToolTip.Tip="Reboot" IsEnabled="{Binding CanReboot}" Height="40" FontSize="20" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe8ac;">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="Warm" Click="WarmReboot_Click"/>
+                            <MenuItem Header="Warm to Active Title" Click="WarmRebootTitle_Click"/>
+                            <MenuItem Header="Cold" Click="ColdReboot_Click"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+                <Button ToolTip.Tip="Screenshot" IsEnabled="{Binding CanScreenshot}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xf727;" Click="Screenshot_Click"/>
+                <Button ToolTip.Tip="Synchronize Time" IsEnabled="{Binding CanSynchronizeTime}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe627;" Click="SynchronizeTime_Click"/>
+                <Button ToolTip.Tip="Create Directory" IsEnabled="{Binding CanCreateDirectory}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe2cc;" Click="CreateDirectory_Click"/>
+                <Button ToolTip.Tip="Upload File" IsEnabled="{Binding CanUpload}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe9fc;" Click="UploadFile_Click"/>
+                <Button ToolTip.Tip="Upload Folder" IsEnabled="{Binding CanUpload}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe9a3;" Click="UploadFolder_Click"/>
+                <Button ToolTip.Tip="Refresh" IsEnabled="{Binding CanRefresh}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe5d5;" Click="Refresh_Click"/>
+            </StackPanel>
+            <Label DockPanel.Dock="Left"  VerticalAlignment="Center" Content="Path:" Margin="0,0,10,10"/>
+            <Button DockPanel.Dock="Right" Content="Back" Click="Back_Click" Margin="10,0,0,10"/>
+            <TextBox IsReadOnly="True" Text="{Binding CurrentPath}" Margin="0,0,0,10"/>
+        </DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Vertical">
+            <DataGrid Margin="10" ItemsSource="{Binding TransferQueueProcessor.TransferDetails}"  IsReadOnly="True" CanUserResizeColumns="True" GridLinesVisibility="All" BorderThickness="1" BorderBrush="Gray" Height="150">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Progress" Binding="{Binding Progress}" />
+                    <DataGridTextColumn Header="Source Path" Binding="{Binding SourcePath}" />
+                    <DataGridTextColumn Header="Dest Path" Binding="{Binding DestPath}" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Margin="10,0,0,10" Spacing="10" Orientation="Horizontal">
+                <Button Content="Clear Queue" Command="{Binding ClearQueueCommand}" />
+                <Button Content="Retry Failed" Command="{Binding RetryFailedCommand}" />
+            </StackPanel>
+        </StackPanel>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding ConsoleItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal" MinWidth="160" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="10" Padding="10" PointerPressed="Border_PointerPressed" Background="#40404040" CornerRadius="20">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem IsVisible="{Binding CanRemove}" Header="Delete" Click="RemoveXbox_Click"/>
+                                    <MenuItem IsVisible="{Binding CanReboot}" Header="Reboot">
+                                        <MenuItem Header="Warm" Click="WarmReboot_Click" />
+                                        <MenuItem Header="Warm to Active Title" Click="WarmRebootTitle_Click" />
+                                        <MenuItem Header="Cold" Click="ColdReboot_Click" />
+                                    </MenuItem>
+                                    
+                                    <MenuItem IsVisible="{Binding CanScreenshot}" Header="Screenshot" Click="Screenshot_Click" />
+                                    <MenuItem IsVisible="{Binding CanSynchronizeTime}" Header="Synchronize Time" Click="SynchronizeTime_Click"/>
+
+                                    <MenuItem IsVisible="{Binding CanLaunch}" Header="Launch" Click="Launch_Click"/>
+                                    <MenuItem IsVisible="{Binding CanDownload}" Header="Download" Click="Download_Click"/>
+                                    <MenuItem IsVisible="{Binding CanRename}" Header="Rename" Click="Rename_Click"/>
+                                    <MenuItem IsVisible="{Binding CanDelete}" Header="Delete" Click="Delete_Click"/>
+                                    
+                                    <MenuItem IsVisible="{Binding CanShowProperties}" Header="Show Properties" Click="ShowProperties_Click"/>
+
+                                </ContextMenu>
+                                
+                            </Border.ContextMenu>
+                            <StackPanel Orientation="Vertical">
+                                <Image Opacity="{Binding ItemOpacity}" HorizontalAlignment="Center" Source="{Binding Image}" Width="100" Height="100"/>
+                                <TextBlock HorizontalAlignment="Center" FontWeight="Bold" Text="{Binding Name}"/>
+                                <TextBlock HorizontalAlignment="Center" Foreground="Gray" Text="{Binding Description}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>
