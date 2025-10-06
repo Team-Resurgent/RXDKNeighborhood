@@ -412,10 +412,9 @@ namespace RXDKNeighborhood.ViewModels
             PopulateConsoleItems();
         }
 
-        public async void WarmReboot()
+        public async void WarmReboot(string ipAddress)
         {
             using var connection = new Connection();
-            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await Reboot.SendAsync(connection, true);
@@ -426,16 +425,15 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
-        public async void WarmRebootTitle()
+        public async void WarmRebootTitle(string ipAddress)
         {
             using var connection = new Connection();
-            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var xbeInfoResponse = await XbeInfo.SendAsync(connection, "");
                 if (xbeInfoResponse.ResponseCode == ResponseCode.ERROR_NOSUCHFILE)
                 {
-                    WarmReboot();
+                    WarmReboot(ipAddress);
                 }
                 else if (!Utils.IsSuccess(xbeInfoResponse.ResponseCode))
                 {
@@ -458,10 +456,9 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
-        public async void ColdReboot()
+        public async void ColdReboot(string ipAddress)
         {
             using var connection = new Connection();
-            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await Reboot.SendAsync(connection, false);
@@ -472,7 +469,7 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
-        public async void Screenshot()
+        public async void Screenshot(string ipAddress)
         {
             if (Owner == null)
             {
@@ -501,7 +498,6 @@ namespace RXDKNeighborhood.ViewModels
             }
 
             using var connection = new Connection();
-            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 bool success = await Utils.DownloadScreenshotAsync(connection, file.Path.LocalPath, new CancellationToken());
@@ -512,10 +508,9 @@ namespace RXDKNeighborhood.ViewModels
             };
         }
 
-        public async void SynchronizeTime()
+        public async void SynchronizeTime(string ipAddress)
         {
             using var connection = new Connection();
-            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await SetSysTime.SendAsync(connection, false);
@@ -917,6 +912,7 @@ namespace RXDKNeighborhood.ViewModels
                 Size = "0 bytes",
                 Contains = "0 Files, 0 Folders",
             };
+            directoryPropertiesWindowViewModel.TriggerUpdate();
             directoryPropertiesWindowViewModel.OnClosing += (changed) =>
             {
                 if (!changed)

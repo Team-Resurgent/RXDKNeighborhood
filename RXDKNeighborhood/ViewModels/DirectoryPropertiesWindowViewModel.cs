@@ -106,6 +106,26 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand CancelCommand { get; }
 
+        public async void TriggerUpdate()
+        {
+            if (IpAddress == null || FileSystemItem == null)
+            {
+                return;
+            }
+            using var connection = new RXDKXBDM.Connection();
+            if (await connection.OpenAsync(IpAddress) == true)
+            {
+                await FolderHelper.GetFolderComtents(connection, FileSystemItem, _cancellationTokenSource.Token, (p) =>
+                {
+                    Dispatcher.UIThread.Invoke(() =>
+                    {
+                        Size = StringExtension.FormatBytes(p.TotalSize);
+                        Contains = $"{p.FilesCount} Files, {p.FolderCount} Folders";
+                    });
+                });
+            }
+        }
+
         public DirectoryPropertiesWindowViewModel()
         {
             OkCommand = ReactiveCommand.Create(async () =>
@@ -130,29 +150,6 @@ namespace RXDKNeighborhood.ViewModels
             {
                 Owner?.Close();
             });
-
-            if (Owner != null)
-            {
-                Owner.Opened += async (s, e) =>
-                {
-                    if (IpAddress == null || FileSystemItem == null)
-                    {
-                        return;
-                    }
-                    using var connection = new RXDKXBDM.Connection();
-                    if (await connection.OpenAsync(IpAddress) == true)
-                    {
-                        await FolderHelper.GetFolderComtents(connection, FileSystemItem, _cancellationTokenSource.Token, (p) =>
-                        {
-                            Dispatcher.UIThread.Invoke(() =>
-                            {
-                                Size = StringExtension.FormatBytes(p.TotalSize);
-                                Contains = $"{p.FilesCount} Files, {p.FolderCount} Folders";
-                            });
-                        });
-                    }
-                };
-            }
         }
     }
 }

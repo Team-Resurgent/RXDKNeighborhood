@@ -71,13 +71,13 @@
                                     <MenuItem IsVisible="{Binding CanRemove}" Header="Delete" Click="RemoveXbox_Click"/>
                                     <MenuItem IsVisible="{Binding CanDiscover}" Header="Discover" Click="Discover_Click"/>
                                     <MenuItem IsVisible="{Binding CanReboot}" Header="Reboot">
-                                        <MenuItem Header="Warm" Click="WarmReboot_Click" />
-                                        <MenuItem Header="Warm to Active Title" Click="WarmRebootTitle_Click" />
-                                        <MenuItem Header="Cold" Click="ColdReboot_Click" />
+                                        <MenuItem Header="Warm" Click="WarmRebootXbox_Click" />
+                                        <MenuItem Header="Warm to Active Title" Click="WarmRebootTitleXbox_Click" />
+                                        <MenuItem Header="Cold" Click="ColdRebootXbox_Click" />
                                     </MenuItem>
                                     
-                                    <MenuItem IsVisible="{Binding CanScreenshot}" Header="Screenshot" Click="Screenshot_Click" />
-                                    <MenuItem IsVisible="{Binding CanSynchronizeTime}" Header="Synchronize Time" Click="SynchronizeTime_Click"/>
+                                    <MenuItem IsVisible="{Binding CanScreenshot}" Header="Screenshot" Click="ScreenshotXbox_Click" />
+                                    <MenuItem IsVisible="{Binding CanSynchronizeTime}" Header="Synchronize Time" Click="SynchronizeTimeXbox_Click"/>
 
                                     <MenuItem IsVisible="{Binding CanLaunch}" Header="Launch" Click="Launch_Click"/>
                                     <MenuItem IsVisible="{Binding CanDownload}" Header="Download" Click="Download_Click"/>

@@ -12,6 +12,7 @@ using Avalonia.Platform.Storage;
 using System.Threading.Tasks;
 using System.Threading;
 using RXDKXBDM.Models;
+using RXDKNeighborhood.Extensions;
 
 namespace RXDKNeighborhood.Views
 {
@@ -125,14 +126,14 @@ namespace RXDKNeighborhood.Views
             vm.RemoveXbox(item);
         }
 
-
         private void WarmReboot_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is not MenuItem menuItem || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.WarmReboot();
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.WarmReboot(ipAddress);
         }
 
         private void WarmRebootTitle_Click(object? sender, RoutedEventArgs e)
@@ -141,7 +142,8 @@ namespace RXDKNeighborhood.Views
             {
                 return;
             }
-            vm.WarmRebootTitle();
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.WarmRebootTitle(ipAddress);
         }
 
         private void ColdReboot_Click(object? sender, RoutedEventArgs e)
@@ -150,7 +152,8 @@ namespace RXDKNeighborhood.Views
             {
                 return;
             }
-            vm.ColdReboot();
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.ColdReboot(ipAddress);
         }
 
         private void Screenshot_Click(object? sender, RoutedEventArgs e)
@@ -159,7 +162,8 @@ namespace RXDKNeighborhood.Views
             {
                 return;
             }
-            vm.Screenshot();
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.Screenshot(ipAddress);
         }
 
         private void SynchronizeTime_Click(object? sender, RoutedEventArgs e)
@@ -168,7 +172,53 @@ namespace RXDKNeighborhood.Views
             {
                 return;
             }
-            vm.SynchronizeTime();
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.SynchronizeTime(ipAddress);
+        }
+
+        private void WarmRebootXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.WarmReboot(xboxItem.IpAddress);
+        }
+
+        private void WarmRebootTitleXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.WarmRebootTitle(xboxItem.IpAddress);
+        }
+
+        private void ColdRebootXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.ColdReboot(xboxItem.IpAddress);
+        }
+
+        private void ScreenshotXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.Screenshot(xboxItem.IpAddress);
+        }
+
+        private void SynchronizeTimeXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.SynchronizeTime(xboxItem.IpAddress);
         }
 
         private void Download_Click(object? sender, RoutedEventArgs e)
