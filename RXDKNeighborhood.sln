@@ -9,7 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RXDKXBDM", "RXDKXBDM\RXDKXB
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B73C0F77-BD72-4D75-90EF-1A2787EBF874}"
 	ProjectSection(SolutionItems) = preProject
-		Notes\Notes.txt = Notes\Notes.txt
 		Notes\XBDM commands by version - xboxdevwiki.pdf = Notes\XBDM commands by version - xboxdevwiki.pdf
 		Notes\Xbox Debug Monitor - xboxdevwiki.pdf = Notes\Xbox Debug Monitor - xboxdevwiki.pdf
 	EndProjectSection

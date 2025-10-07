@@ -346,10 +346,12 @@ namespace RXDKNeighborhood.ViewModels
                                 await ShowAlert("Error", "Failed to connect to Xbox.");
                                 return;
                             }
-
-                            Config.XboxItemList.Add(new XboxItem(response.ResponseValue, s));
-                            Config.TrySaveConfig(Config);
-                            PopulateConsoleItems();
+                            if (!Config.XboxItemList.Any(x => x.IpAddress == response.ResponseValue))
+                            {
+                                Config.XboxItemList.Add(new XboxItem(response.ResponseValue, s));
+                                Config.TrySaveConfig(Config);
+                                PopulateConsoleItems();
+                            }
                             return;
                         }
 
