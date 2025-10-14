@@ -419,7 +419,7 @@ namespace RXDKNeighborhood.ViewModels
             using var connection = new Connection();
             if (await connection.OpenAsync(ipAddress) == true)
             {
-                var response = await Reboot.SendAsync(connection, true);
+                var response = await Reboot.SendAsync(connection, true, false, WaitType.None);
                 if (Utils.IsSuccess(response) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");
@@ -463,7 +463,7 @@ namespace RXDKNeighborhood.ViewModels
             using var connection = new Connection();
             if (await connection.OpenAsync(ipAddress) == true)
             {
-                var response = await Reboot.SendAsync(connection, false);
+                var response = await Reboot.SendAsync(connection, false, false, WaitType.None);
                 if (Utils.IsSuccess(response) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");

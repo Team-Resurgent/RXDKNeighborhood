@@ -8,7 +8,7 @@
         x:Class="RXDKNeighborhood.DirectoryPropertiesWindow"
         x:DataType="vm:DirectoryPropertiesWindowViewModel"
         Padding="20"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/icon.ico"
         Title="{Binding Title}">
 
     <Design.DataContext>

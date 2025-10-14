@@ -10,10 +10,15 @@
         <SelfContained>true</SelfContained>
         <TrimUnusedDependencies>false</TrimUnusedDependencies>
         <PublishReadyToRun>true</PublishReadyToRun>
+        <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Assets\icon.ico" />
     </ItemGroup>
 
     <ItemGroup>

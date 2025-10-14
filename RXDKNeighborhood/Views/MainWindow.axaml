@@ -10,7 +10,7 @@
         DragDrop.DragEnter="OnDragEnter"
         DragDrop.DragOver="OnDragOver"
         DragDrop.Drop="OnDrop"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/icon.ico"
         Title="RXDKNeighborhood">
 
     <Design.DataContext>
