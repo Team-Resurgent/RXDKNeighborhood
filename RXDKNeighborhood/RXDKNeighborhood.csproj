@@ -10,6 +10,7 @@
         <SelfContained>true</SelfContained>
         <TrimUnusedDependencies>false</TrimUnusedDependencies>
         <PublishReadyToRun>true</PublishReadyToRun>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     </PropertyGroup>
 
