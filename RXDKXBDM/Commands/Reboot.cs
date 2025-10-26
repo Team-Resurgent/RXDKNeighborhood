@@ -9,7 +9,7 @@
 
     public class Reboot : Command
     {
-        public static async Task<ResponseCode> SendAsync(Connection connection, bool warm, bool noDebug, WaitType waitType)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection, bool warm, bool noDebug, WaitType waitType)
         {
             var command = "reboot";
             if (warm)
@@ -20,7 +20,7 @@
             {
                 command += " nodebug";
             }
-            if (waitType == WaitType.None)
+            if (waitType != WaitType.None)
             {
                 if (waitType == WaitType.Stop)
                 {
@@ -31,8 +31,9 @@
                     command += " wait";
                 }
             }
-            var socketResponse = await SendCommandAsync(connection, command);
-            return socketResponse.ResponseCode;
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            return commandResponse;
         }
     }
 }

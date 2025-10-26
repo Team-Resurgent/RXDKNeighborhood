@@ -115,7 +115,20 @@ namespace RXDKXBDM
             {
                 value = value.Substring(0, value.Length - 1);
             }
-            if (string.IsNullOrEmpty(value) || uint.TryParse(value.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var result) == false)
+            if (string.IsNullOrEmpty(value))
+            {
+                return 0;
+            }
+
+            if (value.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase))
+            {
+                if (uint.TryParse(value.Substring(2), System.Globalization.NumberStyles.HexNumber, null, out var resultHex) == false)
+                {
+                    return 0;
+                }
+                return resultHex;
+            }
+            if (uint.TryParse(value, out var result) == false)
             {
                 return 0;
             }

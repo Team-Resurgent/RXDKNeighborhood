@@ -9,6 +9,10 @@
             {
                 command += " running";
             }
+            else
+            {
+                command += $" name=\"{name}\"";
+            }
             var socketResponse = await SendCommandAndGetMultilineResponseAsync(connection, command);
             var commandResponse = new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.BodyToDictionary(socketResponse.Body));
             return commandResponse;

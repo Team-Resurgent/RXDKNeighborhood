@@ -1,10 +1,10 @@
 ﻿namespace RXDKXBDM.Commands
 {
-    public class MkDir : Command
+    public class Resume : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection, uint thread)
         {
-            var command = $"mkdir name=\"{path}\"";
+            var command = $"resume thread={thread}";
             var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
             return commandResponse;

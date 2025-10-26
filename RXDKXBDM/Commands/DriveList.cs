@@ -7,7 +7,8 @@ namespace RXDKXBDM.Commands
     {
         public static async Task<CommandResponse<DriveItem[]>> SendAsync(Connection connection)
         {
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, "drivelist");
+            var command = "drivelist";
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
             var result = socketResponse.Response.Select(c => c.ToString()).Order().ToArray();
             if (Utils.IsSuccess(socketResponse.ResponseCode))
             {

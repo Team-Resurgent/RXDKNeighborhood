@@ -141,7 +141,7 @@ namespace RXDKNeighborhood.Helpers
                                     if (await connection.OpenAsync(item.IpAddress) == true)
                                     {
                                         var response = await MkDir.SendAsync(connection, item.DestPath);
-                                        createdDirectory = Utils.IsSuccess(response);
+                                        createdDirectory = Utils.IsSuccess(response.ResponseCode);
                                     }
                                 }
                             }

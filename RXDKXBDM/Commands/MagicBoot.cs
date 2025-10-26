@@ -2,15 +2,16 @@
 {
     public class MagicBoot : Command
     {
-        public static async Task<ResponseCode> SendAsync(Connection connection, string path, bool debug)
+        public static async Task<CommandResponse<string>> SendAsync(Connection connection, string path, bool debug)
         {
             var command = $"magicboot title=\"{path}\"";
             if (debug) 
             {
                 command += " debug";
             }
-            var socketResponse = await SendCommandAsync(connection, command);
-            return socketResponse.ResponseCode;
+            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            return commandResponse;
         }
     }
 }

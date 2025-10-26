@@ -420,7 +420,7 @@ namespace RXDKNeighborhood.ViewModels
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await Reboot.SendAsync(connection, true, false, WaitType.None);
-                if (Utils.IsSuccess(response) == false)
+                if (Utils.IsSuccess(response.ResponseCode) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
@@ -451,7 +451,7 @@ namespace RXDKNeighborhood.ViewModels
 
                 var title = xbeInfoResponse.ResponseValue["name"];
                 var magicBootResponse = await MagicBoot.SendAsync(connection, title, true);
-                if (Utils.IsSuccess(magicBootResponse) == false)
+                if (Utils.IsSuccess(magicBootResponse.ResponseCode) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
@@ -464,7 +464,7 @@ namespace RXDKNeighborhood.ViewModels
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await Reboot.SendAsync(connection, false, false, WaitType.None);
-                if (Utils.IsSuccess(response) == false)
+                if (Utils.IsSuccess(response.ResponseCode) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
@@ -685,7 +685,7 @@ namespace RXDKNeighborhood.ViewModels
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var response = await MagicBoot.SendAsync(connection, Path.Combine(fileSystemItem.Path, fileSystemItem.Name), true);
-                if (Utils.IsSuccess(response) == false)
+                if (Utils.IsSuccess(response.ResponseCode) == false)
                 {
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
@@ -705,7 +705,7 @@ namespace RXDKNeighborhood.ViewModels
                 if (await connection.OpenAsync(ipAddress) == true)
                 {
                     var response = await MkDir.SendAsync(connection, Path.Combine(path, s));
-                    if (Utils.IsSuccess(response) == false)
+                    if (Utils.IsSuccess(response.ResponseCode) == false)
                     {
                         await ShowAlert("Error", "Failed to connect to Xbox.");
                         return;
@@ -733,7 +733,7 @@ namespace RXDKNeighborhood.ViewModels
                 if (await connection.OpenAsync(ipAddress) == true)
                 {
                     var response = await RXDKXBDM.Commands.Rename.SendAsync(connection, Path.Combine(fileSystemItem.Path, fileSystemItem.Name), Path.Combine(fileSystemItem.Path, s));
-                    if (Utils.IsSuccess(response) == false)
+                    if (Utils.IsSuccess(response.ResponseCode) == false)
                     {
                         await ShowAlert("Error", "Failed to connect to Xbox.");
                         return;
@@ -752,7 +752,7 @@ namespace RXDKNeighborhood.ViewModels
             {
                 var path = Path.Combine(fileSystemItem.Path, fileSystemItem.Name);
                 var response = await RXDKXBDM.Commands.Delete.SendAsync(connection, path, fileSystemItem.IsDirectory);
-                if (Utils.IsSuccess(response) == false)
+                if (Utils.IsSuccess(response.ResponseCode) == false)
                 {
                     return false;
                 }
