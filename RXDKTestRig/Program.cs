@@ -1,5 +1,7 @@
 ﻿using RXDKXBDM.Commands;
 using RXDKXBDM;
+using System.Net;
+using System.Net.NetworkInformation;
 
 namespace RXDKTestRig
 {
@@ -26,16 +28,53 @@ namespace RXDKTestRig
     internal class Program
     {
         private const int port = 5002;
+
+        private static void ShowCurrentIPAddresses()
+        {
+            System.Diagnostics.Debug.Print("=== Current Machine IP Addresses ===");
+            try
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        System.Diagnostics.Debug.Print($"IPv4: {ip}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.Print($"Error getting IP addresses: {ex.Message}");
+            }
+            System.Diagnostics.Debug.Print("=====================================");
+        }
+
+        private static void OnLineReceived(object? sender, LineReceivedEventArgs e)
+        {
+            System.Diagnostics.Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [EVENT] Client '{e.ClientEndpoint}' Type: '{e.MessageType}' Message: '{e.Message}'");
+        }
+
         private static async Task Test()
         {
+            ShowCurrentIPAddresses();
+            System.Diagnostics.Debug.Print($"Starting EchoServer on port {port}...");
             var aa = new EchoServer(port);
+            
+            // Subscribe to the LineReceived event
+            aa.LineReceived += OnLineReceived;
+            
             aa.Start();
+            System.Diagnostics.Debug.Print("EchoServer started! Waiting for connections...");
 
             using var connection = new Connection();
+            System.Diagnostics.Debug.Print("Attempting to connect to Xbox at 192.168.1.93...");
             if (await connection.OpenAsync("192.168.1.93") == false)
             {
+                System.Diagnostics.Debug.Print("Failed to connect to Xbox! Check the Xbox IP address.");
                 return;
             }
+            System.Diagnostics.Debug.Print("Successfully connected to Xbox!");
             try
             {
 
@@ -43,8 +82,13 @@ namespace RXDKTestRig
                 var success = false;
 
                 var rebootResponseCode = Reboot.SendAsync(connection, true, false, WaitType.Wait).Result;
+                await Task.Delay(1000);
 
+                // TODO: Update this IP to your current machine's IP address
+                System.Diagnostics.Debug.Print($"Sending NotifyAt command to Xbox - telling it to send debug notifications to 192.168.1.90:{port}");
+                System.Diagnostics.Debug.Print("WARNING: Make sure 192.168.1.90 is your current machine's IP address!");
                 var notifyResponseCode = NotifyAt.SendAsync(connection, port, "192.168.1.90", NotifyAtType.Debug).Result;
+                System.Diagnostics.Debug.Print($"NotifyAt response: {notifyResponseCode.ResponseCode} {notifyResponseCode.ResponseValue}");
 
                 var isDebuggerResponseCode = IsDebugger.SendAsync(connection).Result;
 
@@ -111,7 +155,7 @@ namespace RXDKTestRig
 
             while (true)
             {
-                Task.Delay(1000);
+                Task.Delay(1000).Wait();
             }
         }
     }
