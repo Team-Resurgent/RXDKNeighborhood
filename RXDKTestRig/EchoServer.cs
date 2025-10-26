@@ -30,8 +30,28 @@ namespace RXDKTestRig
         private TcpListener? _listener;
         private CancellationTokenSource? _cts;
         private Task? _serverTask;
+        private int? _filterClientPort = null; // Filter by specific client port
+        private bool _autoSetFilterOnFirstConnection = true; // Auto-set filter to first connection's port
 
         public event EventHandler<LineReceivedEventArgs>? LineReceived;
+
+        public void SetClientPortFilter(int clientPort)
+        {
+            _filterClientPort = clientPort;
+            Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTER] Set client port filter to: {clientPort}");
+        }
+
+        public void ClearClientPortFilter()
+        {
+            _filterClientPort = null;
+            Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTER] Cleared client port filter - accepting all connections");
+        }
+
+        public void SetAutoFilterOnFirstConnection(bool enabled)
+        {
+            _autoSetFilterOnFirstConnection = enabled;
+            Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTER] Auto-filter on first connection: {enabled}");
+        }
 
         public EchoServer(int port)
         {
@@ -96,9 +116,20 @@ namespace RXDKTestRig
 
         private async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
-            var endpoint = client.Client.RemoteEndPoint?.ToString();
-            var connectMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {endpoint}] Connected.";
+            var remoteEndpoint = client.Client.RemoteEndPoint?.ToString();
+            var localEndpoint = client.Client.LocalEndPoint?.ToString();
+            var connectMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {remoteEndpoint} -> Local {localEndpoint}] Connected.";
             Debug.Print(connectMessage);
+
+            // Auto-set filter to first connection's client port if enabled
+            if (_autoSetFilterOnFirstConnection && _filterClientPort == null && remoteEndpoint != null && remoteEndpoint.Contains(':'))
+            {
+                string portString = remoteEndpoint.Substring(remoteEndpoint.LastIndexOf(':') + 1);
+                if (int.TryParse(portString, out int clientPort))
+                {
+                    SetClientPortFilter(clientPort);
+                }
+            }
 
             using (client)
             {
@@ -122,7 +153,7 @@ namespace RXDKTestRig
                         lineBuffer.Append(receivedData);
 
                         // Process complete lines ending with CRLF
-                        ProcessCompleteLines(lineBuffer, endpoint);
+                        ProcessCompleteLines(lineBuffer, remoteEndpoint, localEndpoint);
 
                         // Echo back the raw data
                         await stream.WriteAsync(buffer.AsMemory(0, bytesRead), token);
@@ -134,18 +165,18 @@ namespace RXDKTestRig
                 }
                 catch (Exception ex)
                 {
-                    var errorMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {endpoint}] Error: {ex.Message}";
+                    var errorMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {remoteEndpoint}] Error: {ex.Message}";
                     Debug.Print(errorMessage);
                 }
                 finally
                 {
-                    var disconnectMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {endpoint}] Disconnected.";
+                    var disconnectMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {remoteEndpoint}] Disconnected.";
                     Debug.Print(disconnectMessage);
                 }
             }
         }
 
-        private void ProcessCompleteLines(StringBuilder lineBuffer, string? endpoint)
+        private void ProcessCompleteLines(StringBuilder lineBuffer, string? remoteEndpoint, string? localEndpoint)
         {
             string bufferContent = lineBuffer.ToString();
             int crlfIndex;
@@ -159,7 +190,7 @@ namespace RXDKTestRig
                 bufferContent = bufferContent.Substring(crlfIndex + 2);
                 
                 // Process the complete line
-                ProcessLine(completeLine, endpoint);
+                ProcessLine(completeLine, remoteEndpoint, localEndpoint);
             }
 
             // Update the buffer with remaining partial data
@@ -167,27 +198,47 @@ namespace RXDKTestRig
             lineBuffer.Append(bufferContent);
         }
 
-        private void ProcessLine(string line, string? endpoint)
+        private void ProcessLine(string line, string? remoteEndpoint, string? localEndpoint)
         {
             if (string.IsNullOrWhiteSpace(line))
             {
                 return;
             }
 
-            // Parse the line: first word is type, rest is message
-            string[] parts = line.Split(new char[] { ' ', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
-            
-            string messageType = parts.Length > 0 ? parts[0] : "";
-            string message = parts.Length > 1 ? parts[1] : "";
-
-            // Raise the LineReceived event
-            try
+            // Extract client port from remote endpoint (e.g. "192.168.1.93:19436" -> 19436)
+            int clientPort = 0;
+            if (remoteEndpoint != null && remoteEndpoint.Contains(':'))
             {
-                LineReceived?.Invoke(this, new LineReceivedEventArgs(endpoint ?? "unknown", messageType, message, line));
+                string portString = remoteEndpoint.Substring(remoteEndpoint.LastIndexOf(':') + 1);
+                int.TryParse(portString, out clientPort);
             }
-            catch (Exception ex)
+
+            // Check if we should filter by client port
+            bool shouldProcess = _filterClientPort == null || clientPort == _filterClientPort;
+
+            if (shouldProcess)
             {
-                Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Client {endpoint}] Error in LineReceived event handler: {ex.Message}");
+                //Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [MATCH] [Client Port {clientPort}] [Client {remoteEndpoint}] Line: {line}");
+
+                // Parse the line: first word is type, rest is message
+                string[] parts = line.Split(new char[] { ' ', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                
+                string messageType = parts.Length > 0 ? parts[0] : "";
+                string message = parts.Length > 1 ? parts[1] : "";
+
+                // Raise the LineReceived event
+                try
+                {
+                    LineReceived?.Invoke(this, new LineReceivedEventArgs(remoteEndpoint ?? "unknown", messageType, message, line));
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [MATCH] [Client {remoteEndpoint}] Error in LineReceived event handler: {ex.Message}");
+                }
+            }
+            else
+            {
+                //Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTERED] Client Port {clientPort} (Filter: {_filterClientPort}) [Client {remoteEndpoint}] Line: {line}");
             }
         }
 

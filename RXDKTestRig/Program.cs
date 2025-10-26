@@ -66,6 +66,10 @@ namespace RXDKTestRig
             
             aa.Start();
             System.Diagnostics.Debug.Print("EchoServer started! Waiting for connections...");
+            System.Diagnostics.Debug.Print("Auto-filter enabled: Will automatically filter to first connection's client port");
+            System.Diagnostics.Debug.Print("To disable auto-filter: aa.SetAutoFilterOnFirstConnection(false);");
+            System.Diagnostics.Debug.Print("To manually set filter: aa.SetClientPortFilter(19436);");
+            System.Diagnostics.Debug.Print("To clear filter: aa.ClearClientPortFilter();");
 
             using var connection = new Connection();
             System.Diagnostics.Debug.Print("Attempting to connect to Xbox at 192.168.1.93...");
