@@ -44,7 +44,7 @@ namespace RXDKTestRig
             System.Diagnostics.Debug.Print("Successfully connected to Xbox!");
 
 
-            var response = MmGlobal.SendAsync(connection).Result;
+            var response = WriteFile.SendAsync(connection, "E:\\PrometheOSXbe\\PrometheOSXbe2.xbe").Result;
 
             var bye = Bye.SendAsync(connection).Result;
 
@@ -65,7 +65,7 @@ namespace RXDKTestRig
                 var titleResponseCode = Title.SendAsync(connection, "PrometheOSXbe.xbe", "E:\\PrometheOSXbe\\", true).Result;
                 var debuggerResponseCode = Debugger.SendAsync(connection, DebuggerType.Connect).Result;
                 var breakResponseCode = Break.SendAsync(connection, false, true, false, false).Result;
-                var stopOnResponseCode1 = StopOn.SendAsync(connection, false, false, true).Result;
+                var stopOnResponseCode1 = StopOn.SendOptionsAsync(connection, false, false, true).Result;
                 var goResponseCode1 = Go.SendAsync(connection).Result;
                 //var stopOnResponseCode2 = StopOn.SendAsync(connection, true, false, false).Result;
                 var modulesResponseCode = Modules.SendAsync(connection).Result;
