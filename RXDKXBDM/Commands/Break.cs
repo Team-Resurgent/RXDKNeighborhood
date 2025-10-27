@@ -1,4 +1,6 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Commands.Helpers;
+
+namespace RXDKXBDM.Commands
 {
     public enum BreakType
     {
@@ -57,19 +59,19 @@
 
             if (breakType == BreakType.Addr)
             {
-                command += $" addr=0x{breakValue:x2}";
+                command += $" addr=0x{breakValue:x}";
             }
             else if (breakType == BreakType.Read)
             {
-                command += $" read=0x{breakValue:x2}";
+                command += $" read=0x{breakValue:x}";
             }
             else if (breakType == BreakType.Write)
             {
-                command += $" write=0x{breakValue:x2}";
+                command += $" write=0x{breakValue:x}";
             }
             else if (breakType == BreakType.Size)
             {
-                command += $" size=0x{breakValue:x2}";
+                command += $" size=0x{breakValue:x}";
             }
 
             var socketResponse = await SendCommandAndGetResponseAsync(connection, command);

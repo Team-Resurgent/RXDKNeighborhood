@@ -1,6 +1,6 @@
 ﻿using RXDKXBDM.Models;
 
-namespace RXDKXBDM.Commands
+namespace RXDKXBDM.Commands.Helpers
 {
     public class SocketResponse
     {

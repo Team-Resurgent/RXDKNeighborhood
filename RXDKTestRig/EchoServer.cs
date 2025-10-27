@@ -147,8 +147,8 @@ namespace RXDKTestRig
                             break;
                         }
 
-                        string receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                       
+                        var receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
                         // Append new data to the line buffer
                         lineBuffer.Append(receivedData);
 
@@ -214,8 +214,7 @@ namespace RXDKTestRig
             }
 
             // Check if we should filter by client port
-            bool shouldProcess = _filterClientPort == null || clientPort == _filterClientPort;
-
+            var shouldProcess = _filterClientPort == null || clientPort == _filterClientPort;
             if (shouldProcess)
             {
                 //Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [MATCH] [Client Port {clientPort}] [Client {remoteEndpoint}] Line: {line}");

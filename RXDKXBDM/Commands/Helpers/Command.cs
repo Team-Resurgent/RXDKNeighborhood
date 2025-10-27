@@ -1,6 +1,6 @@
 ﻿using RXDKXBDM.Models;
 
-namespace RXDKXBDM.Commands
+namespace RXDKXBDM.Commands.Helpers
 {
     public abstract partial class Command
     {
@@ -55,7 +55,7 @@ namespace RXDKXBDM.Commands
                 return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
             }
 
-            expectedSizeStream.ExpectedSize = expectedSize;
+            expectedSizeStream.ExpectedSize = expectedSize - 4;
 
             if (connection.TryRecieveStreamBinaryData(expectedSizeStream, cancellationToken) == false)
             {

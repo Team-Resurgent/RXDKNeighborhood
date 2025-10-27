@@ -1,4 +1,5 @@
-﻿using RXDKXBDM.Models;
+﻿using RXDKXBDM.Commands.Helpers;
+using RXDKXBDM.Models;
 
 namespace RXDKXBDM.Commands
 {
@@ -6,7 +7,7 @@ namespace RXDKXBDM.Commands
     {
         public static async Task<CommandResponse<ThreadInfoItem>> SendAsync(Connection connection, uint thread)
         {
-            var command = $"threadinfo thread={thread}";
+            var command = $"threadinfo thread=0x{thread:x}";
             var socketResponse = await SendCommandAndGetMultilineResponseAsync(connection, command);
             var itemProperties = Utils.BodyToDictionary(socketResponse.Body);
 

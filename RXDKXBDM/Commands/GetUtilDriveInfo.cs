@@ -1,6 +1,8 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Commands.Helpers;
+
+namespace RXDKXBDM.Commands
 {
-    public class UtilDriveInfo : Command
+    public class GetUtilDriveInfo : Command
     {
         public static async Task<CommandResponse<IDictionary<string, string>>> SendAsync(Connection connection)
         {

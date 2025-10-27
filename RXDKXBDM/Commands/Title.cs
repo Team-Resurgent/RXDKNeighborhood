@@ -1,4 +1,6 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Commands.Helpers;
+
+namespace RXDKXBDM.Commands
 {
     public class Title : Command
     {

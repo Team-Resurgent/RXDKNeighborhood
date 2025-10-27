@@ -36,7 +36,7 @@ namespace RXDKNeighborhood.Helpers
                 using (var fileStream = new FileStream(destfile, FileMode.Create))
                 using (var downloadStream = new DownloadStream(fileStream, progress))
                 {
-                    var response = Download.SendAsync(connection, sourcefile, cancellationToken, downloadStream).Result;
+                    var response = GetFile.SendAsync(connection, sourcefile, cancellationToken, downloadStream).Result;
                     if (!Utils.IsSuccess(response.ResponseCode))
                     {
                         return false;

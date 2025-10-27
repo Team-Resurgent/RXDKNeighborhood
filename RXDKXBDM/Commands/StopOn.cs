@@ -1,8 +1,10 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Commands.Helpers;
+
+namespace RXDKXBDM.Commands
 {
     public class StopOn : Command
     {
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection)
+        public static async Task<CommandResponse<string>> SendAllAsync(Connection connection)
         {
             var command = $"stopon all";
             var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
@@ -10,7 +12,7 @@
             return commandResponse;
         }
 
-        public static async Task<CommandResponse<string>> SendAsync(Connection connection, bool fce, bool debugstr, bool createthread)
+        public static async Task<CommandResponse<string>> SendOptionsAsync(Connection connection, bool fce, bool debugstr, bool createthread)
         {
             var command = $"stopon";
             if (fce)

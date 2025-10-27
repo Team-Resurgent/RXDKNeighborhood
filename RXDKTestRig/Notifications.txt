@@ -1,0 +1,73 @@
+﻿break
+- addr (dword)
+- thread (dword)
+
+singlestep
+- addr (dword)
+- thread (dword)
+
+data
+- addr (dword)
+- thread (dword)
+- write, read or execute (optional enum with dword)
+
+exception
+- code (dword)
+- thread (dword)
+- address (dword)
+- first (bool)
+- noncont (bool)
+- read (dword)
+
+rip
+- thread (dword)
+
+assert
+- thread (dword)
+- string (string)
+- prompt (string)
+
+execution
+- started, stopped, pending or rebooting (enum)
+
+debugstr e.g. thread=4 lf string=dm: waiting for debugger connection
+- string (string)
+- thread (dword)
+- lf (bool)
+- stop (bool)
+
+create e.g. thread=28 start=0x001e0eb1 stop
+- thread (dword)
+- start (dword)
+- stop (bool)
+
+terminate
+- thread (dword)
+
+modload e.g. name="PrometheOSXbe.exe" base=0x00011b40 size=0x0066f5c0 check=0x00000000 timestamp=0x00000000 tls xbe
+- name (string)
+- base (dword)
+- size (dword)
+- timestamp (dword)
+- check (dword)
+- tls (bool)
+- xbe (bool)
+
+sectload e.g. name=".textbss" base=0x00012000 size=0x001cbdf3 index=0 flags=7
+- name (string)
+- base (dword)
+- size (dword)
+- index (ushort)
+- flags (ushort)
+
+sectunload
+- name (string)
+- base (dword)
+- size (dword)
+- index (ushort)
+- flags (ushort)
+
+fiber
+- id (dword)
+- start (dword)
+- delete (bool)

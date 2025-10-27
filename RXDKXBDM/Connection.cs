@@ -4,6 +4,7 @@ using System.Text;
 using System.Diagnostics;
 using RXDKXBDM.Commands;
 using System;
+using RXDKXBDM.Commands.Helpers;
 
 namespace RXDKXBDM
 {
@@ -45,7 +46,7 @@ namespace RXDKXBDM
             {
                 return;
             }
-            await OpenAsync(mAddress);
+            _ = await Reconnect();
         }
 
         public int ReceiveBinary(ref byte[] recieveBuffer)
@@ -304,7 +305,7 @@ namespace RXDKXBDM
                 catch (Exception ex)
                 {
                     Debug.WriteLine(ex.ToString());
-                    await OpenAsync(mAddress);
+                    _ = await Reconnect();
                 }
             }
 
@@ -370,6 +371,19 @@ namespace RXDKXBDM
             return true;
         }
 
+        public async Task<bool> Reconnect()
+        {
+            var stopwatch = Stopwatch.StartNew();
+            while (stopwatch.ElapsedMilliseconds < 1000)
+            {
+                if (await OpenAsync(mAddress))
+                {
+                    return true;
+                }
+                await Task.Delay(100);
+            }
+            return false;
+        }
 
         public void Close()
         {

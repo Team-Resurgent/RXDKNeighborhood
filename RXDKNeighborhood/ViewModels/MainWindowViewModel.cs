@@ -219,7 +219,7 @@ namespace RXDKNeighborhood.ViewModels
                     using var connection = new Connection();
                     if (await connection.OpenAsync(parts[0]))
                     {
-                        var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(connection);
+                        var utilDriveInfoResponse = await GetUtilDriveInfo.SendAsync(connection);
                         if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
                         {
                             return;
@@ -340,7 +340,7 @@ namespace RXDKNeighborhood.ViewModels
                         using var connection = new Connection();
                         if (await connection.OpenAsync(s) == true)
                         {
-                            var response = await DebugName.SendAsync(connection);
+                            var response = await DbgName.SendAsync(connection);
                             if (Utils.IsSuccess(response.ResponseCode) == false)
                             {
                                 await ShowAlert("Error", "Failed to connect to Xbox.");
@@ -938,7 +938,7 @@ namespace RXDKNeighborhood.ViewModels
             CurrentPath.FormatXboxPath(out var ipAddress, out var _);
             if (await connection.OpenAsync(ipAddress) == true)
             {
-                var utilDriveInfoResponse = await UtilDriveInfo.SendAsync(connection);
+                var utilDriveInfoResponse = await GetUtilDriveInfo.SendAsync(connection);
                 if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
                 {
                     return;

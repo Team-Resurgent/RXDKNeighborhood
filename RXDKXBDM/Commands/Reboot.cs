@@ -1,4 +1,6 @@
-﻿namespace RXDKXBDM.Commands
+﻿using RXDKXBDM.Commands.Helpers;
+
+namespace RXDKXBDM.Commands
 {
     public enum WaitType
     {
@@ -33,6 +35,8 @@
             }
             var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
+            await Task.Delay(1000);
+            await connection.Reconnect();
             return commandResponse;
         }
     }
