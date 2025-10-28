@@ -1,32 +1,58 @@
 ﻿using RXDKXBDM.Commands;
 using RXDKXBDM;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using RXDKNeighborhood.Helpers;
-using System.Threading;
 
 namespace RXDKTestRig
 {
-    public class Launcher
+    public class Launcher // idisposable
     {
-        private const int port = 5000;
+        private const int port = 5005;
+        private EchoServer _echoServer;
+        private Connection _connection;
+        private uint _baseAddress;
+
+        public Action? OnXbeLoaded;
+
+        public Action<uint, uint>? OnBreakpoint;
+
+        public Launcher()
+        {
+            _echoServer = new EchoServer(port);
+            _echoServer.LineReceived += OnLineReceived;
+            _echoServer.Start();
+            _connection = new Connection();
+        }
 
         private void OnLineReceived(object? sender, LineReceivedEventArgs e)
         {
             System.Diagnostics.Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [EVENT] Client '{e.ClientEndpoint}' Type: '{e.MessageType}' Message: '{e.Message}'");
+
+            var paramDictionary = ParamParser.ParseParams(e.Message);
+            if (e.MessageType.Equals("create") && paramDictionary.ContainsKey("stop") && paramDictionary.ContainsKey("thread"))
+            {
+                if (uint.TryParse(paramDictionary["thread"], out var thread))
+                {
+                    var modules = Modules.SendAsync(_connection).Result;
+                    _baseAddress = modules.ResponseValue.Where(x => x.Name.Equals("PrometheOSXbe.exe")).First().Base;
+                    var nostopOnResponseCode1 = NoStopOn.SendOptionsAsync(_connection, false, false, true).Result;
+                    OnXbeLoaded?.Invoke();
+                    SendContinue(thread);
+                }
+            }
+            else if (e.MessageType.Equals("break") && paramDictionary.ContainsKey("stop") && paramDictionary.ContainsKey("addr") && paramDictionary.ContainsKey("thread"))
+            {
+                if (uint.TryParse(paramDictionary["addr"], out var addr))
+                {
+                    if (uint.TryParse(paramDictionary["thread"], out var thread))
+                    {
+                        OnBreakpoint?.Invoke(addr - _baseAddress, thread);
+                    }
+                }
+            }
         }
 
-        public async Task Test()
+        public async Task Launch()
         {
-            System.Diagnostics.Debug.Print($"Starting EchoServer on port {port}...");
-            var echoServer = new EchoServer(port);
-            echoServer.LineReceived += OnLineReceived;
-            echoServer.Start();
-
             var xboxItems = XboxDiscovery.Discover();
             if (xboxItems.Count() == 0)
             {
@@ -34,87 +60,91 @@ namespace RXDKTestRig
             }
 
             var xboxIp = xboxItems.First().IpAddress;
-            using var connection = new Connection();
+            _connection = new Connection();
             System.Diagnostics.Debug.Print($"Attempting to connect to Xbox at {xboxIp}...");
-            if (await connection.OpenAsync(xboxIp) == false)
+            if (await _connection.OpenAsync(xboxIp) == false)
             {
                 System.Diagnostics.Debug.Print("Failed to connect to Xbox! Check the Xbox IP address.");
                 return;
             }
             System.Diagnostics.Debug.Print("Successfully connected to Xbox!");
 
-
-            var response = WriteFile.SendAsync(connection, "E:\\PrometheOSXbe\\PrometheOSXbe2.xbe").Result;
-
-            var bye = Bye.SendAsync(connection).Result;
-
-
-            try
+            var rebootResponseCode = await Reboot.SendAsync(_connection, true, false, WaitType.Wait);
+            var notifyResponseCode = await NotifyAt.SendAsync(_connection, port, null, NotifyAtType.Debug);
+            if (notifyResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
             {
-                var rebootResponseCode = Reboot.SendAsync(connection, true, false, WaitType.Wait).Result;
-                var notifyResponseCode = NotifyAt.SendAsync(connection, port, null, NotifyAtType.Debug).Result;
-                if (notifyResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
-                {
-                    System.Diagnostics.Debug.Print($"NotifyAt response: {notifyResponseCode.ResponseCode} {notifyResponseCode.ResponseValue}");
-                    return;
-                }
-
-
-                var isDebuggerResponseCode = IsDebugger.SendAsync(connection).Result;
-                //var xbeInfoResponseCode = await XbeInfo.SendAsync(connection, "E:\\PrometheOSXbe\\PrometheOSXbe.xbe");
-                var titleResponseCode = Title.SendAsync(connection, "PrometheOSXbe.xbe", "E:\\PrometheOSXbe\\", true).Result;
-                var debuggerResponseCode = Debugger.SendAsync(connection, DebuggerType.Connect).Result;
-                var breakResponseCode = Break.SendAsync(connection, false, true, false, false).Result;
-                var stopOnResponseCode1 = StopOn.SendOptionsAsync(connection, false, false, true).Result;
-                var goResponseCode1 = Go.SendAsync(connection).Result;
-                //var stopOnResponseCode2 = StopOn.SendAsync(connection, true, false, false).Result;
-                var modulesResponseCode = Modules.SendAsync(connection).Result;
-
-
-                await Task.Delay(20000);
-
-
-                // what to do here, hacky try to resume all stopped threads
-                for (int i = 0; i < 2; i++)
-                {
-
-                    await Task.Delay(1000);
-
-                    var threadsResponseCode = Threads.SendAsync(connection).Result;
-                    for (int j = 0; j < threadsResponseCode.ResponseValue.Length; j++)
-                    {
-
-                        var istoppedResponse = IsStopped.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
-                        if (!istoppedResponse.ResponseValue.Contains("not stopped"))
-                        {
-                            var resumeResponse = Resume.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
-                            var threadInfoResponse = ThreadInfo.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
-                            var continueResponseCode = Continue.SendAsync(connection, threadsResponseCode.ResponseValue[j], false).Result;
-                            var goResponseCode3 = await Go.SendAsync(connection);
-
-                            await Task.Delay(1000);
-
-                            //manually edit breakpoint based on persistent connection response
-                            var breakResponseCode2 = Break.SendAsync(connection, false, false, false, true, BreakType.Addr, threadsResponseCode.ResponseValue[j]).Result;
-                            var goResponseCode4 = await Go.SendAsync(connection);
-                        }
-                    }
-                }
-
-         
-
-                await Task.Delay(1000);
-
-
-                while (true)
-                {
-                    await Task.Delay(1000);
-                }
+                System.Diagnostics.Debug.Print($"NotifyAt response: {notifyResponseCode.ResponseCode} {notifyResponseCode.ResponseValue}");
+                return;
             }
-            catch (Exception ex)
-            {
-                //int q = 1;
-            }
+            var isDebuggerResponseCode = await IsDebugger.SendAsync(_connection);
+            var titleResponseCode = await Title.SendAsync(_connection, "PrometheOSXbe.xbe", "E:\\PrometheOSXbe\\", true);
+            var debuggerResponseCode = await Debugger.SendAsync(_connection, DebuggerType.Connect);
+            var stopOnResponseCode1 = await StopOn.SendOptionsAsync(_connection, false, false, true);
+            var goResponseCode1 = await Go.SendAsync(_connection);
+
+            System.Diagnostics.Debug.Print("Lauched Xbe!");
         }
+
+        public void SendContinue(uint thread)
+        {
+            var continueResponseCode = Continue.SendAsync(_connection, thread, false).Result;
+            var goResponseCode3 = Go.SendAsync(_connection).Result;
+        }
+
+        public void AddBreakpoint(uint address)
+        {
+            var virtAddress = _baseAddress + address;
+            var breakResponseCode = Break.SendAddAsync(_connection, virtAddress).Result;
+        }
+
+        public void RemoveBreakpoint(uint address)
+        {
+            var virtAddress = _baseAddress + address;
+            var breakResponseCode = Break.SendRemoveAsync(_connection, virtAddress).Result;
+        }
+
+        public void SendStop()
+        {
+            var haltResponse = Halt.SendAsync(_connection, 0);
+        }
+
     }
 }
+
+
+
+//[2025-10-27 19:10:36] [EVENT] Client '192.168.1.93:11183' Type: 'modload' Message: 'name="PrometheOSXbe.exe" base=0x00011b40 size=0x0066f5c0 check=0x00000000 timestamp=0x00000000 tls xbe'
+
+//var modules = Modules.SendAsync(connection).Result;
+//var moduleBase = modules.ResponseValue.Where(x => x.Name.Equals("PrometheOSXbe.exe")).First().Base;
+//var diaaddress = (uint)0x0023360E;
+//var virt = moduleBase + diaaddress; // expected 0x0024514;
+//var breakResponseCode = Break.SendAddAsync(connection, virt).Result;
+
+
+//// what to do here, hacky try to resume all stopped threads
+//for (int i = 0; i < 2; i++)
+//{
+
+//    await Task.Delay(1000);
+
+//    var threadsResponseCode = Threads.SendAsync(connection).Result;
+//    for (int j = 0; j < threadsResponseCode.ResponseValue.Length; j++)
+//    {
+
+//        var istoppedResponse = IsStopped.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
+//        if (!istoppedResponse.ResponseValue.Contains("not stopped"))
+//        {
+//            var resumeResponse = Resume.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
+//            var threadInfoResponse = ThreadInfo.SendAsync(connection, threadsResponseCode.ResponseValue[j]).Result;
+//            var continueResponseCode = Continue.SendAsync(connection, threadsResponseCode.ResponseValue[j], false).Result;
+//            var goResponseCode3 = await Go.SendAsync(connection);
+
+//            await Task.Delay(1000);
+
+//            //manually edit breakpoint based on persistent connection response
+//            var breakResponseCode2 = Break.SendAsync(connection, false, false, false, true, BreakType.Addr, threadsResponseCode.ResponseValue[j]).Result;
+//            var goResponseCode4 = await Go.SendAsync(connection);
+//        }
+//    }
+//}
