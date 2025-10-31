@@ -6,7 +6,7 @@ namespace RXDKTestRig
 {
     public class Launcher // idisposable
     {
-        private const int port = 5005;
+        private const int port = 5001;
         private EchoServer _echoServer;
         private Connection _connection;
         private uint _baseAddress;
@@ -101,6 +101,15 @@ namespace RXDKTestRig
         {
             var virtAddress = _baseAddress + address;
             var breakResponseCode = Break.SendRemoveAsync(_connection, virtAddress).Result;
+        }
+
+        public void GetContextInfo(uint address, uint thread)
+        {
+            var contextResponseCode = GetContext.SendAsync(_connection, thread, true, true, false, true).Result;
+            var contextExtResponseCode = GetExtContext.SendAsync(_connection, thread).Result;
+            // use address to get synbols
+            // use context info to cross ref symbol registers to memory
+            // read memory and display variable contents
         }
 
         public void SendStop()

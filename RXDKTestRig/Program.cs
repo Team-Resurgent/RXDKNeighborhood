@@ -1,7 +1,8 @@
-﻿using DIA;
+﻿
 using SixLabors.ImageSharp.PixelFormats;
 using static SharpPdb.Windows.DebugSubsections.LinesSubsection;
 using System.Net;
+using System.Runtime.Versioning;
 
 namespace RXDKTestRig
 {
@@ -41,100 +42,112 @@ namespace RXDKTestRig
 
     internal class Program
     {
-        
 
+        [SupportedOSPlatform("windows")]
         static void Main(string[] args)
         {
-            PdbSimpleLines.Main("Xdk.pdb");
-            //var pdb = new SharpPdb.Windows.PdbFile("Xdk.pdb");
-            //PdbStringTable namesStream = pdb.InfoStream.NamesMap;
+            using var pdbParser = new PdbParser();
 
-            //string pdbPath = @"C:\path\to\your.pdb";
-            //string sourceFile = @"C:\path\to\file.cpp";
-            //int lineNumber = 123; // the line you’re investigating
+            pdbParser.LoadPdb("D:\\Git\\DebugTestXbox\\DebugTestXbox\\Debug\\DebugTestXbox.pdb");
+            if (pdbParser.TryGetRvaByFileLine("main.cpp", 229, 0, out var rva))
+            {
+                pdbParser.TryGetSymbolsByRva(rva);
+            }
 
+                //var pdb = new SharpPdb.Windows.PdbFile("Xdk.pdb");
+                //PdbStringTable namesStream = pdb.InfoStream.NamesMap;
 
-            //var diaSource = new DiaSource();
-            //diaSource.loadDataFromPdb(@"xdk.pdb");
-
-            //IDiaSession session;
-            //diaSource.openSession(out session);\
-            //session.globalScope.findInlineeLines
-            //var m = session.findFile(null, "*", NameSearchOptions.None);
+                //string pdbPath = @"C:\path\to\your.pdb";
+                //string sourceFile = @"C:\path\to\file.cpp";
+                //int lineNumber = 123; // the line you’re investigating
 
 
-            //    //foreach (IDiaSourceFile file in sourceFiles)
-            //    //{
-            //    //    Console.WriteLine(file.fileName);
-            //    //}
+                //var diaSource = new DiaSource();
+                //diaSource.loadDataFromPdb(@"xdk.pdb");
+
+                //IDiaSession session;
+                //diaSource.openSession(out session);\
+                //session.globalScope.findInlineeLines
+                //var m = session.findFile(null, "*", NameSearchOptions.None);
 
 
-            //    var pdb = new SharpPdb.Native.PdbFileReader("Xdk.pdb");
-
-            //var symbols = pdb.PublicSymbols;
-            //for (int i = 0; i < symbols.Length; i++)
-            //{
-            //    var symbol = symbols[i];
-            //    if (symbol.Name.Contains("getmodel", StringComparison.CurrentCultureIgnoreCase))
-            //    {
-            //        int qqq = 1;
-            //    }
-
-            //        //System.Diagnostics.Debug.Print($"{symbol.Name}");
-            //}
+                //    //foreach (IDiaSourceFile file in sourceFiles)
+                //    //{
+                //    //    Console.WriteLine(file.fileName);
+                //    //}
 
 
-            //for (int i = 0; i < pdb.Functions.Count; i++)
-            //{
+                //    var pdb = new SharpPdb.Native.PdbFileReader("Xdk.pdb");
 
-            //    var function = pdb.Functions[i];
-            //    var s = pdb.PublicSymbols;
-            //    //var symbol = pdb.PublicSymbols .Find(s => s.Address == fn.Address);
-            //    var qq = 1;
+                //var symbols = pdb.PublicSymbols;
+                //for (int i = 0; i < symbols.Length; i++)
+                //{
+                //    var symbol = symbols[i];
+                //    if (symbol.Name.Contains("getmodel", StringComparison.CurrentCultureIgnoreCase))
+                //    {
+                //        int qqq = 1;
+                //    }
 
-            //System.Diagnostics.Debug.Print($"{function.Name}");
-
-            //var linesProp = function.GetType().GetProperty("Lines") ?? function.GetType().GetProperty("LineNumbers");
-
-            //var ooo = 1;
-            //foreach (var lineInfo in function.li.LineInfos)
-            //{
-            //    var source = lineInfo.SourceFile?.Name ?? "<unknown>";
-            //    Console.WriteLine($"  {source}:{lineInfo.LineNumber}  Address=0x{lineInfo.Address:X}");
-            //}
+                //        //System.Diagnostics.Debug.Print($"{symbol.Name}");
+                //}
 
 
-            //using (var pdb = NativePdbReader.Open(pdbPath))
-            //{
-            //    foreach (var module in pdb.Modules)
-            //    {
-            //        foreach (var symbol in module.Symbols)
-            //        {
-            //            // Each symbol may have line info (function, block, etc.)
-            //            foreach (var line in symbol.Lines)
-            //            {
-            //                if (line.SourceFile?.Name?.EndsWith(sourceFile, StringComparison.OrdinalIgnoreCase) == true &&
-            //                    line.LineNumber == lineNumber)
-            //                {
-            //                    Console.WriteLine($"Symbol: {symbol.Name}");
-            //                    Console.WriteLine($"Address: 0x{symbol.Address:X}");
-            //                    Console.WriteLine($"Line: {line.LineNumber} in {line.SourceFile.Name}");
-            //                    Console.WriteLine();
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
+                //for (int i = 0; i < pdb.Functions.Count; i++)
+                //{
+
+                //    var function = pdb.Functions[i];
+                //    var s = pdb.PublicSymbols;
+                //    //var symbol = pdb.PublicSymbols .Find(s => s.Address == fn.Address);
+                //    var qq = 1;
+
+                //System.Diagnostics.Debug.Print($"{function.Name}");
+
+                //var linesProp = function.GetType().GetProperty("Lines") ?? function.GetType().GetProperty("LineNumbers");
+
+                //var ooo = 1;
+                //foreach (var lineInfo in function.li.LineInfos)
+                //{
+                //    var source = lineInfo.SourceFile?.Name ?? "<unknown>";
+                //    Console.WriteLine($"  {source}:{lineInfo.LineNumber}  Address=0x{lineInfo.Address:X}");
+                //}
+
+
+                //using (var pdb = NativePdbReader.Open(pdbPath))
+                //{
+                //    foreach (var module in pdb.Modules)
+                //    {
+                //        foreach (var symbol in module.Symbols)
+                //        {
+                //            // Each symbol may have line info (function, block, etc.)
+                //            foreach (var line in symbol.Lines)
+                //            {
+                //                if (line.SourceFile?.Name?.EndsWith(sourceFile, StringComparison.OrdinalIgnoreCase) == true &&
+                //                    line.LineNumber == lineNumber)
+                //                {
+                //                    Console.WriteLine($"Symbol: {symbol.Name}");
+                //                    Console.WriteLine($"Address: 0x{symbol.Address:X}");
+                //                    Console.WriteLine($"Line: {line.LineNumber} in {line.SourceFile.Name}");
+                //                    Console.WriteLine();
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
 
             _ = Task.Run(async () =>
             {
                 var launcher = new Launcher();
                 launcher.OnXbeLoaded += () =>
                 {
-                    launcher.AddBreakpoint(0x0023360E);
+                    if (pdbParser.TryGetRvaByFileLine("main.cpp", 236, 0, out var rva))
+                    {
+                        launcher.AddBreakpoint(rva);
+                    }
                 };
                 launcher.OnBreakpoint += (addr, thread) =>
                 {
+                    pdbParser.TryGetFileLineByRva(addr, out var file, out var line, out var col);
+                    launcher.GetContextInfo(addr, thread);
                     launcher.SendContinue(thread);
                 };
                 await launcher.Launch();
@@ -146,11 +159,6 @@ namespace RXDKTestRig
             }
         }
 
-        // Example method to test PDB parser
-        static void TestPdbParser(string pdbPath)
-        {
-            System.Diagnostics.Debug.Print($"Testing PDB parser with: {pdbPath}");
-            PdbSimpleLines.Main(pdbPath);
-        }
+    
     }
 }
