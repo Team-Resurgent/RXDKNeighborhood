@@ -1,12 +1,13 @@
 ﻿using RXDKXBDM.Commands;
 using RXDKXBDM;
 using RXDKNeighborhood.Helpers;
+using RXDKXBDM.Models;
 
 namespace RXDKTestRig
 {
     public class Launcher // idisposable
     {
-        private const int port = 5001;
+        private const int port = 5000;
         private EchoServer _echoServer;
         private Connection _connection;
         private uint _baseAddress;
@@ -103,18 +104,30 @@ namespace RXDKTestRig
             var breakResponseCode = Break.SendRemoveAsync(_connection, virtAddress).Result;
         }
 
-        public void GetContextInfo(uint address, uint thread)
+        public ContextItem? GetContextInfo(uint address, uint thread)
         {
             var contextResponseCode = GetContext.SendAsync(_connection, thread, true, true, false, true).Result;
-            var contextExtResponseCode = GetExtContext.SendAsync(_connection, thread).Result;
+            //var contextExtResponseCode = GetExtContext.SendAsync(_connection, thread).Result;
             // use address to get synbols
             // use context info to cross ref symbol registers to memory
             // read memory and display variable contents
+
+            return contextResponseCode.ResponseValue;
+        }
+
+        public byte[]? GetMem(uint address, uint length)
+        {
+            return GetMem2.SendAsync(_connection, address, length).Result.ResponseValue;
         }
 
         public void SendStop()
         {
             var haltResponse = Halt.SendAsync(_connection, 0);
+        }
+
+        public uint BaseAddress()
+        {
+            return _baseAddress;
         }
 
     }

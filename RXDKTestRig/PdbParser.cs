@@ -1,6 +1,9 @@
 ﻿using Dia2Lib;
+using RXDKTestRig;
 using RXDKXBDM.Commands;
 using SharpPdb.Windows;
+using SixLabors.ImageSharp.PixelFormats;
+using System;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -240,13 +243,13 @@ public class PdbParser : IDisposable
         return type.name ?? "Unknown";
     }
 
-    public bool TryGetSymbolsByRva(uint rva)
+    public bool TryGetSymbolsByRva(uint addr, uint thread, Launcher launcher)
     {
         Console.Clear();
 
         if (_diaSession != null)
         {
-            _diaSession.findSymbolByRVA(rva, SymTagEnum.SymTagFunction, out var function);
+            _diaSession.findSymbolByRVA(addr, SymTagEnum.SymTagFunction, out var function);
             function.findChildren(SymTagEnum.SymTagNull, null, (uint)NameSearchOptions.nsNone, out var symbols);
 
             var symbolsEnum = symbols.GetEnumerator();
@@ -258,8 +261,41 @@ public class PdbParser : IDisposable
                     switch ((LocationType)symbol.locationType)
                     {
                         case LocationType.LocIsRegRel:
-                            Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
+
+                            var type = GetDataSymbolType(symbol);
+                            Console.WriteLine($"    {symbol.name}: {type} Size: {symbol.type.length}");
                             Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}, Offset: {symbol.offset}");
+
+                            var contextInfo = launcher.GetContextInfo(addr, thread);
+                            if (contextInfo != null)
+                            {
+                                //launcher.BaseAddress()
+                                var memdata = launcher.GetMem((uint)((contextInfo.Ebp + symbol.offset)), (uint)symbol.type.length);
+                                if (type.Equals("bool"))
+                                {
+                                    Console.WriteLine($"    Contents: {(memdata[0] == 1 ? "true" : "false")}");
+                                }
+                                else if (type.Equals("char*"))
+                                {
+                                    Console.Write("    Contents: ");
+                                    uint value = BitConverter.ToUInt32(memdata, 0);
+                                    var memdata2 = launcher.GetMem(value, 100);
+                                    foreach (byte b in memdata2)
+                                    {
+                                        if (b == 0)
+                                        {
+                                            break;
+                                        }
+                                        Console.Write((char)b);
+                                    }
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    uint value = BitConverter.ToUInt32(memdata, 0);
+                                    Console.WriteLine($"    Contents: Ptr(0x{value:x8})");
+                                }
+                            }
                             break;
                         case LocationType.LocIsEnregistered:
                             Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");

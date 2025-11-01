@@ -65,6 +65,34 @@ namespace RXDKXBDM.Commands.Helpers
             return new SocketResponse { Response = "OK", ResponseCode = ResponseCode.SUCCESS_OK };
         }
 
+        internal static async Task<SocketResponse> SendCommandAndGetBinaryResponseAsync2(Connection connection, string command, uint length, CancellationToken cancellationToken, ExpectedSizeStream expectedSizeStream)
+        {
+            var sendResponse = await connection.TrySendStringAsync($"{command}\r\n");
+            if (Utils.IsSuccess(sendResponse.ResponseCode) == false)
+            {
+                return sendResponse;
+            }
+            var recieveHeaderResponse = connection.TryRecieveHeaderResponse();
+            if (recieveHeaderResponse.ResponseCode != ResponseCode.SUCCESS_BINRESPONSE)
+            {
+                return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
+            }
+
+            //if (connection.TryRecieveBinarySize(out var expectedSize) == false)
+            //{
+            //    return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
+            //}
+
+            expectedSizeStream.ExpectedSize = length;
+
+            if (connection.TryRecieveStreamBinaryData(expectedSizeStream, cancellationToken) == false)
+            {
+                return new SocketResponse { Response = "Unexpected Result", ResponseCode = ResponseCode.ERROR_INTERNAL_ERROR };
+            }
+
+            return new SocketResponse { Response = "OK", ResponseCode = ResponseCode.SUCCESS_OK };
+        }
+
         internal static async Task<SocketResponse> SendCommandAndGetOptionalBinaryResponseAsync(Connection connection, string command, CancellationToken cancellationToken, ExpectedSizeStream expectedSizeStream)
         {
             var sendResponse = await connection.TrySendStringAsync($"{command}\r\n");

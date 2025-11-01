@@ -3,6 +3,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using static SharpPdb.Windows.DebugSubsections.LinesSubsection;
 using System.Net;
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
 
 namespace RXDKTestRig
 {
@@ -48,11 +49,11 @@ namespace RXDKTestRig
         {
             using var pdbParser = new PdbParser();
 
-            pdbParser.LoadPdb("D:\\Git\\DebugTestXbox\\DebugTestXbox\\Debug\\DebugTestXbox.pdb");
-            if (pdbParser.TryGetRvaByFileLine("main.cpp", 229, 0, out var rva))
-            {
-                pdbParser.TryGetSymbolsByRva(rva);
-            }
+            pdbParser.LoadPdb("H:\\Git\\PrometheOS-Builder\\Tools\\PrometheOSXbe\\PrometheOSXbe\\Debug-Dummy\\PrometheOSXbe.pdb");
+            //if (pdbParser.TryGetRvaByFileLine("main.cpp", 809, 0, out var rva))
+            //{
+            //    pdbParser.TryGetSymbolsByRva(rva);
+            //}
 
                 //var pdb = new SharpPdb.Windows.PdbFile("Xdk.pdb");
                 //PdbStringTable namesStream = pdb.InfoStream.NamesMap;
@@ -139,7 +140,7 @@ namespace RXDKTestRig
                 var launcher = new Launcher();
                 launcher.OnXbeLoaded += () =>
                 {
-                    if (pdbParser.TryGetRvaByFileLine("main.cpp", 236, 0, out var rva))
+                    if (pdbParser.TryGetRvaByFileLine("main.cpp", 809, 0, out var rva))
                     {
                         launcher.AddBreakpoint(rva);
                     }
@@ -148,6 +149,7 @@ namespace RXDKTestRig
                 {
                     pdbParser.TryGetFileLineByRva(addr, out var file, out var line, out var col);
                     launcher.GetContextInfo(addr, thread);
+                    pdbParser.TryGetSymbolsByRva(addr, thread, launcher);
                     launcher.SendContinue(thread);
                 };
                 await launcher.Launch();
