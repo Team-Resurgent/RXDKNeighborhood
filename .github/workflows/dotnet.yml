@@ -33,9 +33,19 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    - name: Install Windows SDK (for DIA)
+    - name: Register DIA COM library
       if: ${{ matrix.os_flavor == 'win-x64' }}
-      run: choco install windows-sdk-10-version-19041-all -y
+      shell: pwsh
+      run: |
+        $dllPath = "${{ github.workspace }}\Tools\msdia140.dll"
+        if (Test-Path $dllPath) {
+          Write-Host "Registering msdia140.dll..."
+          regsvr32 /s $dllPath
+          Write-Host "msdia140.dll registered successfully."
+        } else {
+            Write-Error "msdia140.dll not found at $dllPath"
+            exit 1
+        }
 
     - name: Setup .NET 8
       uses: actions/setup-dotnet@v4
