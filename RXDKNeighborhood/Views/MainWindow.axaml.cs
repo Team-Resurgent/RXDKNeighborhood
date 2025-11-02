@@ -186,56 +186,104 @@ namespace RXDKNeighborhood.Views
 
         private void WarmRebootXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.WarmReboot(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.WarmReboot(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.WarmReboot(ipAddress);
+            }
         }
 
         private void WarmRebootTitleXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.WarmRebootTitle(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.WarmRebootTitle(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.WarmRebootTitle(ipAddress);
+            }
         }
 
         private void ColdRebootXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.ColdReboot(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.ColdReboot(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.ColdReboot(ipAddress);
+            }
         }
 
         private void ScreenshotXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.Screenshot(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.Screenshot(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.Screenshot(ipAddress);
+            }
         }
 
         private void SynchronizeTimeXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.SynchronizeTime(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.SynchronizeTime(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.SynchronizeTime(ipAddress);
+            }
         }
 
         private void DebugXbox_Click(object? sender, RoutedEventArgs e)
         {
-            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
             {
                 return;
             }
-            vm.Debug(xboxItem.IpAddress);
+            if (item.Value is XboxItem xboxItem)
+            {
+                vm.Debug(xboxItem.IpAddress);
+            }
+            else if (item.Value is FileSystemItem fileSystemItem)
+            {
+                vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+                vm.Debug(ipAddress);
+            }
         }
 
         private void Download_Click(object? sender, RoutedEventArgs e)
