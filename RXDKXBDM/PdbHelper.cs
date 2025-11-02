@@ -1,8 +1,8 @@
-﻿using Dia2Lib;
+﻿#if WINDOWS_ONLY
+
+using Dia2Lib;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-
-#if WINDOWS_ONLY
 
 [SupportedOSPlatform("windows")]
 public class PdbHelper : IDisposable
