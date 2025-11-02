@@ -57,7 +57,7 @@ namespace RXDKTestRig
             var message = "debugstr thread=28 lf string=Code c0000094 Addr 000C21C0";
             string addrs = Regex.Match(message, @"Addr\s+([0-9A-Fa-f]+)").Groups[1].Value;
             uint.TryParse(addrs, System.Globalization.NumberStyles.HexNumber, null, out var addr);
-            int qqq = 1;
+
             //if (pdbParser.TryGetRvaByFileLine("main.cpp", 809, 0, out var rva))
             //{
             //    pdbParser.TryGetSymbolsByRva(rva);

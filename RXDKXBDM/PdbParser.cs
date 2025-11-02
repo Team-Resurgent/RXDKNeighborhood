@@ -1,4 +1,5 @@
 ﻿using Dia2Lib;
+using System.Data.Common;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -9,9 +10,6 @@ namespace RXDKXBDM
         IDiaDataSource? _diaSource;
         IDiaSession? _diaSession;
         IntPtr _diaHandle;
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        private static extern IntPtr LoadLibrary(string lpFileName);
 
         [Flags]
         enum NameSearchOptions
@@ -48,28 +46,55 @@ namespace RXDKXBDM
             }
         }
 
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadLibrary(string lpFileName);
+
+        [return: MarshalAs(UnmanagedType.Interface)]
+        [DllImport("msdia140.dll", CharSet = CharSet.Unicode, ExactSpelling = true, PreserveSig = false)]
+        private static extern object DllGetClassObject([In] in Guid rclSid, [In] in Guid rIid);
+
+        [ComImport]
+        [ComVisible(false)]
+        [Guid("00000001-0000-0000-C000-000000000046")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IDiaClassFactory
+        {
+            void CreateInstance([MarshalAs(UnmanagedType.Interface)] object? aggregator,[In] in Guid refIid, [MarshalAs(UnmanagedType.Interface)] out object createdObject);
+        }
+
         public bool LoadPdb(string pdbPath)
         {
-            string baseDir = AppContext.BaseDirectory;
-            string diaPath = Path.Combine(baseDir, "msdia140.dll");
+            var userFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RXDKNeighborhood");
+            var diaPath = Path.Combine(userFolder, "msdia140.dll");
             if (!File.Exists(diaPath))
             {
-                const string name = "";
                 var assembly = Assembly.GetExecutingAssembly();
-                var output = Path.Combine(AppContext.BaseDirectory, name);
-                using var stream = assembly.GetManifestResourceStream(name);
+                using var stream = assembly.GetManifestResourceStream("RXDKXBDM.msdia140.dll");
                 using var file = File.Create(diaPath);
                 stream?.CopyTo(file);
             }
             if (_diaHandle == IntPtr.Zero)
             {
                 _diaHandle = LoadLibrary(diaPath);
+                int err = Marshal.GetLastWin32Error();
                 if (_diaHandle == IntPtr.Zero)
                 {
                     return false;
                 }
             }
-            _diaSource = new DiaSource();
+            var guid = new Guid("{e6756135-1e65-4d17-8576-610761398c3c}");
+            var classFactory = DllGetClassObject(guid, typeof(IDiaClassFactory).GetTypeInfo().GUID);
+            if (classFactory is not IDiaClassFactory factoryInstance)
+            {
+                return false;
+            }
+            factoryInstance.CreateInstance(null, typeof(IDiaDataSource).GetTypeInfo().GUID, out var createdObject);
+            if (createdObject is not IDiaDataSource dataSourceInstance)
+            {
+                return false;
+            }
+            _diaSource = dataSourceInstance;
             _diaSource.loadDataFromPdb(pdbPath);
             _diaSource.openSession(out _diaSession);
             return true;
