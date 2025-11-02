@@ -38,20 +38,18 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # 🔹 Restore packages
     - name: Restore NuGet packages
       run: dotnet restore ./${{ matrix.project }}/${{ matrix.project }}.csproj
 
-    # 🔹 Publish
-    - name: Publish
-      run: |
-        if (${{ matrix.os_flavor }} -eq 'win-x64') {
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\${{ matrix.project }}\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:OutputPath=${{ github.workspace }}\artifacts\${{ matrix.project }}\${{ matrix.os_flavor }}-${{ matrix.arch }}
-        } else {
-          dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -c Release -r ${{ matrix.os_flavor }} -p:PlatformTarget=${{ matrix.arch }} -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
-        }
+    - name: Publish Windows
+      if: ${{ matrix.os_flavor == 'win-x64' }}
+      run: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe .\\${{ matrix.project }}\\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:OutputPath=${{ github.workspace }}\\artifacts\\${{ matrix.project }}\\${{ matrix.os_flavor }}-${{ matrix.arch }}"
       shell: pwsh
     
+    - name: Publish Unix
+      if: ${{ matrix.os_flavor != 'win-x64' }}
+      run: dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -c Release -r ${{ matrix.os_flavor }} -p:PlatformTarget=${{ matrix.arch }} -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
+
     - name: Check publish output
       run: ls -laR ${{ github.workspace }}/artifacts/${{ matrix.project }}/
 
