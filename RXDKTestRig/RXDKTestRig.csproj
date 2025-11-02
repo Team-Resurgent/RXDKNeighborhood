@@ -12,8 +12,8 @@
     <None Remove="Xdk.pdb" />
   </ItemGroup>
 
-  <ItemGroup>
-    <COMReference Include="Dia2Lib">
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != '' And $(RuntimeIdentifier.StartsWith('win-'))">
+      <COMReference Include="Dia2Lib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
       <VersionMajor>2</VersionMajor>
