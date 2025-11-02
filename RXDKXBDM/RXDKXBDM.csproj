@@ -13,7 +13,6 @@
             <HintPath>Dia2Lib.dll</HintPath>
             <Private>true</Private>
         </Reference>
-        <None Include="Dia2Lib.dll" CopyToOutputDirectory="PreserveNewest" />
         <EmbeddedResource Include="msdia140.dll" CopyToOutputDirectory="Never" />
     </ItemGroup>
     
