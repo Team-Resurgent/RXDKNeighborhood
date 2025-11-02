@@ -7,6 +7,8 @@ using System.Windows.Input;
 using System.Text;
 using Avalonia.Threading;
 using System;
+using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace RXDKNeighborhood.ViewModels
 {
@@ -35,32 +37,35 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand LoadPdbCommand { get; }
 
-        private void OnLineReceived(object? sender, LineReceivedEventArgs e)
+        private void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
-            var logMessage = new StringBuilder($"{e.MessageType} {e.Message}");
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return;
+            }
 
-            var paramDictionary = ParamParser.ParseParams(e.Message);
-            if (e.MessageType.Equals("modload") && paramDictionary.ContainsKey("base") && paramDictionary.ContainsKey("xbe"))
+            var paramDictionary = ParamParser.ParseParams(message);
+
+            if (messageType.Equals("modload") && paramDictionary.ContainsKey("base") && paramDictionary.ContainsKey("xbe"))
             {
                 if (uint.TryParse(paramDictionary["base"], out var addr))
                 {
                     _baseAddress = addr;
                 }
             }
-            else if (e.MessageType.Equals("break") || e.MessageType.Equals("singlestep") || e.MessageType.Equals("exception"))
+            else if (messageType.Equals("break") || messageType.Equals("singlestep") || messageType.Equals("exception"))
             {
                 if (!paramDictionary.ContainsKey("addr") && !paramDictionary.ContainsKey("address"))
                 {
                     return;
                 }
-#if WINDOWS_ONLY
                 if (!string.IsNullOrEmpty(_pdbPath) && OperatingSystem.IsWindows())
                 {
                     uint addr = 0;
                     if (uint.TryParse(paramDictionary["addr"], out addr) || uint.TryParse(paramDictionary["address"], out addr))
                     {
                         var rva = addr - _baseAddress;
-                        using var pdb = new PdbHelper();
+                        using var pdb = new PdbParser();
                         pdb.LoadPdb(_pdbPath);
                         if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
                         {
@@ -68,9 +73,36 @@ namespace RXDKNeighborhood.ViewModels
                         }
                     }
                 }
-#endif
             }
+            else if (messageType.Equals("debugstr"))
+            {
+                //debugstr thread=28 lf string=Code c0000094 Addr 000C21C0
+                if (!message.Contains("Code"))
+                {
+                    return;
+                }
+                if (!string.IsNullOrEmpty(_pdbPath) && OperatingSystem.IsWindows())
+                {
+                    string addrs = Regex.Match(message, @"Addr\s+([0-9A-Fa-f]+)").Groups[1].Value;
+                    uint addr = 0;
+                    if (uint.TryParse(addrs, System.Globalization.NumberStyles.HexNumber, null, out addr))
+                    {
+                        var rva = addr - _baseAddress;
+                        using var pdb = new PdbParser();
+                        pdb.LoadPdb(_pdbPath);
+                        if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
+                        {
+                            logMessage.Append($" line={line} file={file}");
+                        }
+                    }
+                }
+            }
+        }
 
+        private void OnLineReceived(object? sender, LineReceivedEventArgs e)
+        {
+            var logMessage = new StringBuilder($"{e.MessageType} {e.Message}");
+            PdbProcess(logMessage, e.MessageType, e.Message);
             logMessage.AppendLine();
             DebugLog += logMessage.ToString();
 
@@ -100,7 +132,6 @@ namespace RXDKNeighborhood.ViewModels
                 return;
             }
         }
-
 
         public DebugWindowViewModel()
         {

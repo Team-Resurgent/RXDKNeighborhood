@@ -4,25 +4,19 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
-  <ItemGroup Condition="(('$(RuntimeIdentifier)' != '') And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
-      <COMReference Include="Dia2Lib">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>2</VersionMajor>
-      <Guid>106173a0-0173-4e5c-84e7-e915422be997</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-
-    <PropertyGroup Condition="('$(RuntimeIdentifier)' != '' And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
-        <DefineConstants>WINDOWS_ONLY</DefineConstants>
-    </PropertyGroup>
-
+    <ItemGroup>
+        <Reference Include="Dia2Lib">
+            <HintPath>Dia2Lib.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
+        <None Include="Dia2Lib.dll" CopyToOutputDirectory="PreserveNewest" />
+        <EmbeddedResource Include="msdia140.dll" CopyToOutputDirectory="Never" />
+    </ItemGroup>
+    
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>

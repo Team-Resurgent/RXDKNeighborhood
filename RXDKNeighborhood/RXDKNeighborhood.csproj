@@ -64,10 +64,6 @@
         <Folder Include="Assets\NewFolder\" />
     </ItemGroup>
 
-    <PropertyGroup Condition="('$(RuntimeIdentifier)' != '' And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
-        <DefineConstants>WINDOWS_ONLY</DefineConstants>
-    </PropertyGroup>
-
     <ItemGroup>
       <AvaloniaXaml Update="Views\DebugWindow.axaml">
         <SubType>Designer</SubType>
