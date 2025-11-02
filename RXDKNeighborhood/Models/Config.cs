@@ -18,20 +18,20 @@ namespace RXDKNeighborhood.Models
 
         private static bool TryGetApplicationPath(ref string applicationPath)
         {
-            var exePath = AppDomain.CurrentDomain.BaseDirectory;
-            if (exePath == null)
+            try
+            {
+                var userFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RXDKNeighborhood");
+                if (!Directory.Exists(userFolder))
+                {
+                    Directory.CreateDirectory(userFolder);
+                }
+                applicationPath = userFolder;
+                return true;
+            }
+            catch
             {
                 return false;
             }
-
-            var result = Path.GetDirectoryName(exePath);
-            if (result == null)
-            {
-                return false;
-            }
-
-            applicationPath = result;
-            return true;
         }
 
         public static bool TryLoadConfig(out Config? config)
