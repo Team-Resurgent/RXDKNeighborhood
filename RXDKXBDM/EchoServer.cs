@@ -1,12 +1,9 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
 
-namespace RXDKTestRig
+namespace RXDKXBDM
 {
     public class LineReceivedEventArgs : EventArgs
     {
@@ -31,7 +28,6 @@ namespace RXDKTestRig
         private CancellationTokenSource? _cts;
         private Task? _serverTask;
         private int? _filterClientPort = null; // Filter by specific client port
-        private bool _autoSetFilterOnFirstConnection = true; // Auto-set filter to first connection's port
 
         public event EventHandler<LineReceivedEventArgs>? LineReceived;
 
@@ -45,12 +41,6 @@ namespace RXDKTestRig
         {
             _filterClientPort = null;
             Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTER] Cleared client port filter - accepting all connections");
-        }
-
-        public void SetAutoFilterOnFirstConnection(bool enabled)
-        {
-            _autoSetFilterOnFirstConnection = enabled;
-            Debug.Print($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [FILTER] Auto-filter on first connection: {enabled}");
         }
 
         public EchoServer(int port)
@@ -122,7 +112,7 @@ namespace RXDKTestRig
             Debug.Print(connectMessage);
 
             // Auto-set filter to first connection's client port if enabled
-            if (_autoSetFilterOnFirstConnection && _filterClientPort == null && remoteEndpoint != null && remoteEndpoint.Contains(':'))
+            if (remoteEndpoint != null && remoteEndpoint.Contains(':'))
             {
                 string portString = remoteEndpoint.Substring(remoteEndpoint.LastIndexOf(':') + 1);
                 if (int.TryParse(portString, out int clientPort))
@@ -185,10 +175,10 @@ namespace RXDKTestRig
             {
                 // Extract the complete line (without CRLF)
                 string completeLine = bufferContent.Substring(0, crlfIndex);
-                
+
                 // Remove the processed line and CRLF from buffer
                 bufferContent = bufferContent.Substring(crlfIndex + 2);
-                
+
                 // Process the complete line
                 ProcessLine(completeLine, remoteEndpoint, localEndpoint);
             }
@@ -221,7 +211,7 @@ namespace RXDKTestRig
 
                 // Parse the line: first word is type, rest is message
                 string[] parts = line.Split(new char[] { ' ', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
-                
+
                 string messageType = parts.Length > 0 ? parts[0] : "";
                 string message = parts.Length > 1 ? parts[1] : "";
 

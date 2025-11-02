@@ -44,6 +44,10 @@
         <Compile Update="Views\AlertDialogWindow.axaml.cs">
             <DependentUpon>AlertDialogWindow.axaml</DependentUpon>
         </Compile>
+        <Compile Update="Views\DebugWindow.axaml.cs">
+          <SubType>Code</SubType>
+          <DependentUpon>DebugWindow.axaml</DependentUpon>
+        </Compile>
         <Compile Update="Views\FilePropertiesWindow.axaml.cs">
             <DependentUpon>FilePropertiesWindow.axaml</DependentUpon>
         </Compile>
@@ -57,5 +61,11 @@
 
     <ItemGroup>
         <Folder Include="Assets\NewFolder\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaXaml Update="Views\DebugWindow.axaml">
+        <SubType>Designer</SubType>
+      </AvaloniaXaml>
     </ItemGroup>
 </Project>

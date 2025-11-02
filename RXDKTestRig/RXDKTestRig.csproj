@@ -37,10 +37,5 @@
     <ProjectReference Include="..\RXDKXBDM\RXDKXBDM.csproj" />
   </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.BPerf.Dia2Lib" Version="1.0.2" />
-        <PackageReference Include="SharpPdb" Version="1.0.4" />
-    </ItemGroup>
-
 
 </Project>

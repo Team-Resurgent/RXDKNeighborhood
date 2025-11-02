@@ -1,14 +1,7 @@
 ﻿using Dia2Lib;
 using RXDKTestRig;
-using RXDKXBDM.Commands;
-using SharpPdb.Windows;
-using SixLabors.ImageSharp.PixelFormats;
-using System;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Text;
-using static SharpPdb.Windows.DebugSubsections.LinesSubsection;
 
 [SupportedOSPlatform("windows")]
 public class PdbParser : IDisposable

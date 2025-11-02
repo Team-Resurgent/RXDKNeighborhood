@@ -21,8 +21,6 @@ namespace RXDKNeighborhood.Views
         public MainWindow()
         {
             InitializeComponent();
-
-      
         }
 
         private void OnDragEnter(object? sender, DragEventArgs e)
@@ -176,6 +174,16 @@ namespace RXDKNeighborhood.Views
             vm.SynchronizeTime(ipAddress);
         }
 
+        private void Debug_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainWindowViewModel vm)
+            {
+                return;
+            }
+            vm.CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            vm.Debug(ipAddress);
+        }
+
         private void WarmRebootXbox_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
@@ -219,6 +227,15 @@ namespace RXDKNeighborhood.Views
                 return;
             }
             vm.SynchronizeTime(xboxItem.IpAddress);
+        }
+
+        private void DebugXbox_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm || item.Value is not XboxItem xboxItem)
+            {
+                return;
+            }
+            vm.Debug(xboxItem.IpAddress);
         }
 
         private void Download_Click(object? sender, RoutedEventArgs e)

@@ -34,6 +34,7 @@
                 </Button>
                 <Button ToolTip.Tip="Screenshot" IsEnabled="{Binding CanScreenshot}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xf727;" Click="Screenshot_Click"/>
                 <Button ToolTip.Tip="Synchronize Time" IsEnabled="{Binding CanSynchronizeTime}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe627;" Click="SynchronizeTime_Click"/>
+                <Button ToolTip.Tip="Debug" IsEnabled="{Binding CanDebug}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe868;" Click="Debug_Click"/>
                 <Button ToolTip.Tip="Create Directory" IsEnabled="{Binding CanCreateDirectory}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe2cc;" Click="CreateDirectory_Click"/>
                 <Button ToolTip.Tip="Upload File" IsEnabled="{Binding CanUpload}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe9fc;" Click="UploadFile_Click"/>
                 <Button ToolTip.Tip="Upload Folder" IsEnabled="{Binding CanUpload}" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe9a3;" Click="UploadFolder_Click"/>
@@ -78,6 +79,7 @@
                                     
                                     <MenuItem IsVisible="{Binding CanScreenshot}" Header="Screenshot" Click="ScreenshotXbox_Click" />
                                     <MenuItem IsVisible="{Binding CanSynchronizeTime}" Header="Synchronize Time" Click="SynchronizeTimeXbox_Click"/>
+                                    <MenuItem IsVisible="{Binding CanDebug}" Header="Debug" Click="DebugXbox_Click"/>
 
                                     <MenuItem IsVisible="{Binding CanLaunch}" Header="Launch" Click="Launch_Click"/>
                                     <MenuItem IsVisible="{Binding CanDownload}" Header="Download" Click="Download_Click"/>

@@ -37,6 +37,7 @@ namespace RXDKNeighborhood.ViewModels
                     this.RaisePropertyChanged(nameof(CanDiscover));
                     this.RaisePropertyChanged(nameof(CanScreenshot));
                     this.RaisePropertyChanged(nameof(CanSynchronizeTime));
+                    this.RaisePropertyChanged(nameof(CanDebug));
                     this.RaisePropertyChanged(nameof(CanCreateDirectory));
                     this.RaisePropertyChanged(nameof(CanUpload));
                     this.RaisePropertyChanged(nameof(CanRefresh));
@@ -52,6 +53,8 @@ namespace RXDKNeighborhood.ViewModels
         public bool CanScreenshot => CurrentPath.Length > 0;
 
         public bool CanSynchronizeTime => CurrentPath.Length > 0;
+
+        public bool CanDebug => CurrentPath.Length > 0;
 
         public bool CanCreateDirectory => CurrentPath.Split("\\", StringSplitOptions.RemoveEmptyEntries).Length > 1;
 
@@ -521,6 +524,19 @@ namespace RXDKNeighborhood.ViewModels
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
             }
+        }
+
+        public void Debug(string ipAddress)
+        {
+            if (Owner == null)
+            {
+                return;
+            }
+            var debugWindow = new DebugWindow();
+            var debugWindowViewModel = new DebugWindowViewModel { Owner = debugWindow, IpAddress = ipAddress };
+            debugWindowViewModel.Start();
+            debugWindow.DataContext = debugWindowViewModel;
+            debugWindow.Show();
         }
 
         public async void Download(ConsoleItem item)

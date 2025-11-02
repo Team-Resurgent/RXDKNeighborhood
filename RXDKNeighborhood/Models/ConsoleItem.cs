@@ -57,6 +57,7 @@ namespace RXDKNeighborhood.ViewModels
                     this.RaisePropertyChanged(nameof(CanReboot));
                     this.RaisePropertyChanged(nameof(CanScreenshot));
                     this.RaisePropertyChanged(nameof(CanSynchronizeTime));
+                    this.RaisePropertyChanged(nameof(CanDebug));
                     this.RaisePropertyChanged(nameof(CanDownload));
                     this.RaisePropertyChanged(nameof(CanLaunch));
                     this.RaisePropertyChanged(nameof(CanRename));
@@ -100,6 +101,14 @@ namespace RXDKNeighborhood.ViewModels
         }
 
         public bool CanSynchronizeTime
+        {
+            get
+            {
+                return Type != ConsoleItemType.AddXbox;
+            }
+        }
+
+        public bool CanDebug
         {
             get
             {
