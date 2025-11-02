@@ -33,20 +33,38 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
+    - name: Register DIA COM library
+      if: ${{ matrix.os_flavor == 'win-x64' }}
+      shell: pwsh
+      run: |
+        $dllPath = "./Tools/msdia140.dll"
+        if (Test-Path $dllPath) {
+          Write-Host "Registering msdia140.dll..."
+          regsvr32 /s $dllPath
+          Write-Host "msdia140.dll registered successfully."
+        } else {
+            Write-Error "msdia140.dll not found at $dllPath"
+            exit 1
+        }
+
     - name: Setup .NET 8
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    # 🔹 Restore packages
     - name: Restore NuGet packages
       run: dotnet restore ./${{ matrix.project }}/${{ matrix.project }}.csproj
 
-    # 🔹 Publish all platforms using dotnet (Windows, Linux, macOS)
-    - name: Publish
-      run: dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -c Release -r ${{ matrix.os_flavor }} -p:PlatformTarget=${{ matrix.arch }} -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
+    - name: Publish Windows
+      if: ${{ matrix.os_flavor == 'win-x64' }}
       shell: pwsh
+      run: |
+        & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\${{ matrix.project }}\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:OutputPath=${{ github.workspace }}\artifacts\${{ matrix.project }}\${{ matrix.os_flavor }}-${{ matrix.arch }}
     
+    - name: Publish Unix
+      if: ${{ matrix.os_flavor != 'win-x64' }}
+      run: dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -c Release -r ${{ matrix.os_flavor }} -p:PlatformTarget=${{ matrix.arch }} -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
+
     - name: Check publish output
       run: ls -laR ${{ github.workspace }}/artifacts/${{ matrix.project }}/
 
