@@ -5,6 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup Condition="(('$(RuntimeIdentifier)' != '') And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
@@ -18,6 +19,10 @@
       <EmbedInteropTypes>true</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+
+    <PropertyGroup Condition="('$(RuntimeIdentifier)' != '' And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
+        <DefineConstants>WINDOWS_ONLY</DefineConstants>
+    </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\RXDKXBDM\RXDKXBDM.csproj" />

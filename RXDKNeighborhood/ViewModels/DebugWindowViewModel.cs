@@ -53,6 +53,7 @@ namespace RXDKNeighborhood.ViewModels
                 {
                     return;
                 }
+#if WINDOWS_ONLY
                 if (!string.IsNullOrEmpty(_pdbPath) && OperatingSystem.IsWindows())
                 {
                     uint addr = 0;
@@ -67,6 +68,7 @@ namespace RXDKNeighborhood.ViewModels
                         }
                     }
                 }
+#endif
             }
 
             logMessage.AppendLine();

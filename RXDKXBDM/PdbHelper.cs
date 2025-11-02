@@ -2,6 +2,8 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
+#if WINDOWS_ONLY
+
 [SupportedOSPlatform("windows")]
 public class PdbHelper : IDisposable
 {
@@ -79,3 +81,5 @@ public class PdbHelper : IDisposable
         return false;
     }
 }
+
+#endif
