@@ -37,7 +37,7 @@ jobs:
       if: ${{ matrix.os_flavor == 'win-x64' }}
       shell: pwsh
       run: |
-        $dllPath = "${{ github.workspace }}\Tools\msdia140.dll"
+        $dllPath = "./Tools/msdia140.dll"
         if (Test-Path $dllPath) {
           Write-Host "Registering msdia140.dll..."
           regsvr32 /s $dllPath
