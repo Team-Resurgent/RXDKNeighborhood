@@ -7,12 +7,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="DebugTestXbox.pdb" />
-    <None Remove="Xdk.pdb" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(RuntimeIdentifier)' != '' And $(RuntimeIdentifier.StartsWith('win-'))">
+  <ItemGroup Condition="(('$(RuntimeIdentifier)' != '') And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
       <COMReference Include="Dia2Lib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
@@ -25,17 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="DebugTestXbox.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Xdk.pdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\RXDKXBDM\RXDKXBDM.csproj" />
   </ItemGroup>
-
 
 </Project>

@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <COMReference Include="Dia2Lib">
+  <ItemGroup Condition="(('$(RuntimeIdentifier)' != '') And $(RuntimeIdentifier.StartsWith('win-'))) Or ('$(OS)' == 'Windows_NT')">
+      <COMReference Include="Dia2Lib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
       <VersionMajor>2</VersionMajor>

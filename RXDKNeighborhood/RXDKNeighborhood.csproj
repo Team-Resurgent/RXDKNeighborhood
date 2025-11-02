@@ -12,6 +12,7 @@
         <PublishReadyToRun>true</PublishReadyToRun>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

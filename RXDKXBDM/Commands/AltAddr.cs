@@ -1,5 +1,4 @@
 ﻿using RXDKXBDM.Commands.Helpers;
-using SixLabors.ImageSharp.Metadata.Profiles.Iptc;
 using System.Net;
 
 namespace RXDKXBDM.Commands
