@@ -11,6 +11,9 @@ permissions:
 
 jobs:
   build:
+
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
         arch: [x64]
@@ -20,78 +23,36 @@ jobs:
         include:
           - os_flavor: win-x64
             archive_ext: zip
-            runs_on: windows-latest
           - os_flavor: linux-x64
             archive_ext: tar
-            runs_on: ubuntu-latest
           - os_flavor: osx-x64
             archive_ext: tar
-            runs_on: macos-latest
-
-    runs-on: ${{ matrix.runs_on }}
 
     steps:
-    - uses: actions/checkout@v5
-
-    - name: Register DIA COM library
-      if: ${{ matrix.os_flavor == 'win-x64' }}
-      shell: pwsh
-      run: |
-        $dllPath = "./Tools/msdia140.dll"
-        if (Test-Path $dllPath) {
-          Write-Host "Registering msdia140.dll..."
-          regsvr32 /s $dllPath
-          Write-Host "msdia140.dll registered successfully."
-        } else {
-            Write-Error "msdia140.dll not found at $dllPath"
-            exit 1
-        }
-
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
+    - uses: actions/checkout@v5.0.0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4.3.1
       with:
         dotnet-version: 8.0.x
-
-    - name: Restore NuGet packages
-      run: dotnet restore ./${{ matrix.project }}/${{ matrix.project }}.csproj
-
-    - name: Publish Windows
-      if: ${{ matrix.os_flavor == 'win-x64' }}
-      shell: pwsh
-      run: |
-        & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\${{ matrix.project }}\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:PlatformTarget=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:UseAppHost=true /p:OutputPath=${{ github.workspace }}\artifacts\${{ matrix.project }}\${{ matrix.os_flavor }}-${{ matrix.arch }}
-    
-    - name: Publish Unix
-      if: ${{ matrix.os_flavor != 'win-x64' }}
-      run: dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -c Release -r ${{ matrix.os_flavor }} -p:PlatformTarget=${{ matrix.arch }} -p:IncludeNativeLibrariesForSelfExtract=true -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
-
-    - name: Check publish output (Windows)
-      if: ${{ matrix.os_flavor == 'win-x64' }}
-      shell: pwsh
-      run: Get-ChildItem -Path "${{ github.workspace }}\artifacts\${{ matrix.project }}" -Recurse
-
-    - name: Check publish output (Unix)
-      if: ${{ matrix.os_flavor != 'win-x64' }}
+    - name: Publish
+      run: dotnet publish ./${{ matrix.project }}/${{ matrix.project }}.csproj -p:Platform=${{ matrix.arch }} -r ${{ matrix.os_flavor }} -c Release -p:SelfContained=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:TrimUnusedDependencies=false -p:DebugType=None -p:DebugSymbols=false -p:AvaloniaUseCompiledBindingsByDefault=true --output ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}
+    - name: Check publish output
       run: ls -laR ${{ github.workspace }}/artifacts/${{ matrix.project }}/
-      
     - name: Chmod (Unix)
       if: ${{ matrix.os_flavor == 'linux-x64' || matrix.os_flavor == 'osx-x64' }}
       run: chmod +x ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}/${{ matrix.project_lowercase }}
-
     - name: Compress binaries
       run: 7z a ${{ github.workspace }}/${{ matrix.project }}-${{ matrix.os_flavor }}.${{ matrix.archive_ext }} ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}/*
-
     - name: Create Draft Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v2.3.2
       if: startsWith(github.ref, 'refs/heads/main')
       with:
         tag_name: latest
         draft: true
         files: |
           ${{ github.workspace }}/${{ matrix.project }}-${{ matrix.os_flavor }}.${{ matrix.archive_ext }}
-
     - name: Create Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v2.3.2
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
