@@ -43,8 +43,9 @@ jobs:
 
     - name: Publish Windows
       if: ${{ matrix.os_flavor == 'win-x64' }}
-      run: &"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\${{ matrix.project }}\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:OutputPath=${{ github.workspace }}\artifacts\${{ matrix.project }}\${{ matrix.os_flavor }}-${{ matrix.arch }}
       shell: pwsh
+      run: |
+        & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" .\${{ matrix.project }}\${{ matrix.project }}.csproj /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=${{ matrix.os_flavor }} /p:SelfContained=true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:TrimUnusedDependencies=false /p:OutputPath=${{ github.workspace }}\artifacts\${{ matrix.project }}\${{ matrix.os_flavor }}-${{ matrix.arch }}
     
     - name: Publish Unix
       if: ${{ matrix.os_flavor != 'win-x64' }}
