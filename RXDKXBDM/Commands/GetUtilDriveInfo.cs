@@ -7,8 +7,11 @@ namespace RXDKXBDM.Commands
         public static async Task<CommandResponse<IDictionary<string, string>>> SendAsync(Connection connection)
         {
             var socketResponse = await SendCommandAndGetResponseAsync(connection, "getutildrvinfo");
-            var commandResponse = new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.StringToDictionary(socketResponse.Response));
-            return commandResponse;
+            if (socketResponse.ResponseCode == ResponseCode.SUCCESS_OK)
+            {
+                return new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, Utils.StringToDictionary(socketResponse.Response));
+            }
+            return new CommandResponse<IDictionary<string, string>>(socketResponse.ResponseCode, new Dictionary<string, string>());
         }
     }
 }

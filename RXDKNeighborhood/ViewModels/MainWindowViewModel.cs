@@ -223,11 +223,6 @@ namespace RXDKNeighborhood.ViewModels
                     if (await connection.OpenAsync(parts[0]))
                     {
                         var utilDriveInfoResponse = await GetUtilDriveInfo.SendAsync(connection);
-                        if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
-                        {
-                            return;
-                        }
-
                         var driveListResponse = await DriveList.SendAsync(connection);
                         if (Utils.IsSuccess(driveListResponse.ResponseCode) == false || driveListResponse.ResponseValue == null)
                         {
@@ -955,11 +950,6 @@ namespace RXDKNeighborhood.ViewModels
             if (await connection.OpenAsync(ipAddress) == true)
             {
                 var utilDriveInfoResponse = await GetUtilDriveInfo.SendAsync(connection);
-                if (Utils.IsSuccess(utilDriveInfoResponse.ResponseCode) == false || utilDriveInfoResponse.ResponseValue == null)
-                {
-                    return;
-                }
-
                 var response = await DriveFreeSpace.SendAsync(connection, driveItem.Name);
                 if (Utils.IsSuccess(response.ResponseCode) == false || response.ResponseValue == null)
                 {
