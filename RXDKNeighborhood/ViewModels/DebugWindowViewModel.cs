@@ -309,6 +309,8 @@ namespace RXDKNeighborhood.ViewModels
                     DebugLog += "Continue failed.";
                     return;
                 }
+
+                IsStopped = false;
             });
         }
     }
