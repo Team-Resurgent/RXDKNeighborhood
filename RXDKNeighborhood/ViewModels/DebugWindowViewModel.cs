@@ -120,7 +120,7 @@ namespace RXDKNeighborhood.ViewModels
                 logMessage.Append(index == -1 ? $"{e.MessageType} {e.Message}" : e.Message[(index + marker.Length)..].Trim());
             }
             else if (e.MessageType.Equals("hello"))
-            { 
+            {
                 // dont output
             }
             else
@@ -129,8 +129,12 @@ namespace RXDKNeighborhood.ViewModels
             }
 
             PdbProcess(logMessage, e.MessageType, e.Message);
-            logMessage.AppendLine();
-            DebugLog += logMessage.ToString();
+
+            if (logMessage.Length > 0)
+            {
+                logMessage.AppendLine();
+                DebugLog += logMessage.ToString();
+            }
 
             Dispatcher.UIThread.Invoke(() => { 
                 Owner?.LogScrollViewer.ScrollToEnd();
