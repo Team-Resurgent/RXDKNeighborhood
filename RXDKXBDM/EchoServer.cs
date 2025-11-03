@@ -138,20 +138,14 @@ namespace RXDKXBDM
                         }
 
                         var receivedData = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
-                        // Append new data to the line buffer
                         lineBuffer.Append(receivedData);
 
-                        // Process complete lines ending with CRLF
                         ProcessCompleteLines(lineBuffer, remoteEndpoint, localEndpoint);
-
-                        // Echo back the raw data
-                        await stream.WriteAsync(buffer.AsMemory(0, bytesRead), token);
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    // Server stopping
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes("bye\r\n"));
                 }
                 catch (Exception ex)
                 {
@@ -173,17 +167,11 @@ namespace RXDKXBDM
 
             while ((crlfIndex = bufferContent.IndexOf("\r\n")) >= 0)
             {
-                // Extract the complete line (without CRLF)
                 string completeLine = bufferContent.Substring(0, crlfIndex);
-
-                // Remove the processed line and CRLF from buffer
                 bufferContent = bufferContent.Substring(crlfIndex + 2);
-
-                // Process the complete line
                 ProcessLine(completeLine, remoteEndpoint, localEndpoint);
             }
 
-            // Update the buffer with remaining partial data
             lineBuffer.Clear();
             lineBuffer.Append(bufferContent);
         }
@@ -234,7 +222,9 @@ namespace RXDKXBDM
         public async Task StopAsync()
         {
             if (_cts == null)
+            {
                 return;
+            }
 
             var stoppingMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Server] Stopping...";
             Debug.Print(stoppingMessage);
@@ -243,9 +233,14 @@ namespace RXDKXBDM
             try
             {
                 if (_serverTask != null)
+                {
                     await _serverTask;
+                }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) 
+            {
+                
+            }
 
             _listener?.Stop();
             _cts.Dispose();

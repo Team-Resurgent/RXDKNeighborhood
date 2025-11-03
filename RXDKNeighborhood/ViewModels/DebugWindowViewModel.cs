@@ -49,6 +49,11 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand ClearLogCommand { get; }
 
+        public void Closing()
+        {
+            _echoServer?.StopAsync();
+        }
+
         private string AddressToLogMessage(uint address)
         {
             if (!string.IsNullOrEmpty(_pdbPath))
@@ -106,7 +111,7 @@ namespace RXDKNeighborhood.ViewModels
 
         private void OnLineReceived(object? sender, LineReceivedEventArgs e)
         {
-            var logMessage = new StringBuilder($"{e.MessageType} {e.Message}");
+            var logMessage = new StringBuilder();
 
             if (e.MessageType.Equals("debugstr"))
             {
