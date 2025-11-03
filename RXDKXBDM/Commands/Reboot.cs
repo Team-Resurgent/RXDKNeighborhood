@@ -33,7 +33,7 @@ namespace RXDKXBDM.Commands
                     command += " wait";
                 }
             }
-            var socketResponse = await SendCommandAndGetResponseAsync(connection, command);
+            var socketResponse = await SendCommandAndIgnoreResponseAsync(connection, command);
             var commandResponse = new CommandResponse<string>(socketResponse.ResponseCode, socketResponse.Response);
             await Task.Delay(1000);
             await connection.Reconnect();

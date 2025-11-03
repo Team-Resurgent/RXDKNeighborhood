@@ -11,7 +11,7 @@ namespace RXDKXBDM.Commands
             using var downloadStream = new DownloadStream(memoryStream);
 
             var command = $"getmem2 addr=0x{addr:x} length=0x{length:x}";
-            var socketResponse = await SendCommandAndGetBinaryResponseAsync2(connection, command, length, default, downloadStream);
+            var socketResponse = await SendCommandAndGetBinaryResponseWithNoLengthAsync(connection, command, length, default, downloadStream);
             if (socketResponse.ResponseCode == ResponseCode.SUCCESS_OK)
             {
                 return new CommandResponse<byte[]?>(socketResponse.ResponseCode, memoryStream.ToArray());

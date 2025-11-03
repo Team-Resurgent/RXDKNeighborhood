@@ -7,8 +7,11 @@ using System.Windows.Input;
 using System.Text;
 using Avalonia.Threading;
 using System;
-using System.Text.RegularExpressions;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Linq;
+using Avalonia.Controls.Shapes;
+using System.IO;
 
 namespace RXDKNeighborhood.ViewModels
 {
@@ -28,6 +31,13 @@ namespace RXDKNeighborhood.ViewModels
             set => this.RaiseAndSetIfChanged(ref _ipAddress, value);
         }
 
+        private string _title = "Debug Monitor";
+        public string Title
+        {
+            get => _title;
+            set => this.RaiseAndSetIfChanged(ref _title, value);
+        }
+
         private string _debugLog = "";
         public string DebugLog
         {
@@ -37,6 +47,23 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand LoadPdbCommand { get; }
 
+        public ICommand ClearLogCommand { get; }
+
+        private string AddressToLogMessage(uint address)
+        {
+            if (!string.IsNullOrEmpty(_pdbPath))
+            {
+                var rva = address - _baseAddress;
+                using var pdb = new PdbParser();
+                pdb.LoadPdb(_pdbPath);
+                if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
+                {
+                    return $" line={line} file={file}";
+                }
+            }
+            return string.Empty;
+        }
+
         private void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -45,8 +72,9 @@ namespace RXDKNeighborhood.ViewModels
             }
 
             var paramDictionary = ParamParser.ParseParams(message);
+            var keys = paramDictionary.Keys.ToArray();
 
-            if (messageType.Equals("modload") && paramDictionary.ContainsKey("base") && paramDictionary.ContainsKey("xbe"))
+            if (messageType.Equals("modload") && keys.Contains("base") && keys.Contains("xbe"))
             {
                 if (uint.TryParse(paramDictionary["base"], out var addr))
                 {
@@ -55,45 +83,22 @@ namespace RXDKNeighborhood.ViewModels
             }
             else if (messageType.Equals("break") || messageType.Equals("singlestep") || messageType.Equals("exception"))
             {
-                if (!paramDictionary.ContainsKey("addr") && !paramDictionary.ContainsKey("address"))
+                if (!keys.Contains("addr") && !keys.Contains("address"))
                 {
                     return;
                 }
-                if (!string.IsNullOrEmpty(_pdbPath) && OperatingSystem.IsWindows())
+                if (uint.TryParse(paramDictionary["addr"], out var addr) || uint.TryParse(paramDictionary["address"], out addr))
                 {
-                    uint addr = 0;
-                    if (uint.TryParse(paramDictionary["addr"], out addr) || uint.TryParse(paramDictionary["address"], out addr))
-                    {
-                        var rva = addr - _baseAddress;
-                        using var pdb = new PdbParser();
-                        pdb.LoadPdb(_pdbPath);
-                        if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
-                        {
-                            logMessage.Append($" line={line} file={file}");
-                        }
-                    }
+                    logMessage.Append(AddressToLogMessage(addr));
                 }
             }
             else if (messageType.Equals("debugstr"))
             {
-                //debugstr thread=28 lf string=Code c0000094 Addr 000C21C0
-                if (!message.Contains("Code"))
+                if (keys.Length == 7 && keys.Contains("string") && paramDictionary["string"].Equals("Code") && keys[5] == "Addr")
                 {
-                    return;
-                }
-                if (!string.IsNullOrEmpty(_pdbPath) && OperatingSystem.IsWindows())
-                {
-                    string addrs = Regex.Match(message, @"Addr\s+([0-9A-Fa-f]+)").Groups[1].Value;
-                    uint addr = 0;
-                    if (uint.TryParse(addrs, System.Globalization.NumberStyles.HexNumber, null, out addr))
+                    if (uint.TryParse(keys[6], NumberStyles.HexNumber, null, out var addr))
                     {
-                        var rva = addr - _baseAddress;
-                        using var pdb = new PdbParser();
-                        pdb.LoadPdb(_pdbPath);
-                        if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
-                        {
-                            logMessage.Append($" line={line} file={file}");
-                        }
+                        logMessage.Append(AddressToLogMessage(addr));
                     }
                 }
             }
@@ -158,12 +163,20 @@ namespace RXDKNeighborhood.ViewModels
                     }
 
                     _pdbPath = files[0].Path.LocalPath;
+
+                    Title = $"Debug Monitor - Using {System.IO.Path.GetFileName(_pdbPath)}";
                 }
                 catch
                 {
                     // do nothing
                 }
             });
+
+            ClearLogCommand = ReactiveCommand.Create(() =>
+            {
+                DebugLog = string.Empty;
+            });
+
         }
     }
 }

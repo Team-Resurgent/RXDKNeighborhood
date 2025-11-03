@@ -46,6 +46,19 @@ namespace RXDKTestRig
         [SupportedOSPlatform("windows")]
         static void Main(string[] args)
         {
+            var message = "debugstr thread=28 lf string=Code c0000094 Addr 000C21C0";
+            var paramDictionary = ParamParser.ParseParams(message);
+
+            var keys = paramDictionary.Keys.ToArray();
+            //debugstr thread=28 lf string=Code c0000094 Addr 000C21C0
+            if (keys.Length == 7 && paramDictionary.ContainsKey("string") && paramDictionary["string"].Equals("Code") && keys[5] == "Addr")
+            {
+                if (uint.TryParse(keys[6], System.Globalization.NumberStyles.HexNumber, null, out var addr))
+                {
+                    // logMessage.Append(AddressToLogMessage(addr));
+                }
+            }
+
             using var pdbParser = new PdbParser();
 
             pdbParser.LoadPdb("C:\\Users\\eq2k\\Downloads\\Daemon-X.pdb");
@@ -54,9 +67,9 @@ namespace RXDKTestRig
        
             }
 
-            var message = "debugstr thread=28 lf string=Code c0000094 Addr 000C21C0";
-            string addrs = Regex.Match(message, @"Addr\s+([0-9A-Fa-f]+)").Groups[1].Value;
-            uint.TryParse(addrs, System.Globalization.NumberStyles.HexNumber, null, out var addr);
+            //var message = "debugstr thread=28 lf string=Code c0000094 Addr 000C21C0";
+            //string addrs = Regex.Match(message, @"Addr\s+([0-9A-Fa-f]+)").Groups[1].Value;
+            //uint.TryParse(addrs, System.Globalization.NumberStyles.HexNumber, null, out var addr);
 
             //if (pdbParser.TryGetRvaByFileLine("main.cpp", 809, 0, out var rva))
             //{
