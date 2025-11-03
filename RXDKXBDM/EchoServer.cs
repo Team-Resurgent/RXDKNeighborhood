@@ -206,7 +206,7 @@ namespace RXDKXBDM
                 // Raise the LineReceived event
                 try
                 {
-                    LineReceived?.Invoke(this, new LineReceivedEventArgs(remoteEndpoint ?? "unknown", messageType, message, line));
+                    LineReceived?.Invoke(this, new LineReceivedEventArgs(remoteEndpoint ?? "unknown", messageType.ToLower(), message, line));
                 }
                 catch (Exception ex)
                 {

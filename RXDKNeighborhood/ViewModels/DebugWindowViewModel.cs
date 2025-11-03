@@ -119,6 +119,10 @@ namespace RXDKNeighborhood.ViewModels
                 var index = e.Message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
                 logMessage.Append(index == -1 ? $"{e.MessageType} {e.Message}" : e.Message[(index + marker.Length)..].Trim());
             }
+            else if (e.MessageType.Equals("hello"))
+            { 
+                // dont output
+            }
             else
             {
                 logMessage.Append($"{e.MessageType} {e.Message}");
