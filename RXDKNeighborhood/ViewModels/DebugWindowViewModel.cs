@@ -49,8 +49,13 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand ClearLogCommand { get; }
 
-        public void Closing()
+        public async void Closing()
         {
+            using var _connection = new Connection();
+            if (await _connection.OpenAsync(IpAddress))
+            {
+                _ = NotifyAt.SendAsync(_connection, _port, null, NotifyAtType.Drop).Result;
+            }
             _echoServer?.StopAsync();
         }
 
