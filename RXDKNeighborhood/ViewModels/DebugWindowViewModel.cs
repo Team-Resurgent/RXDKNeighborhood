@@ -107,6 +107,18 @@ namespace RXDKNeighborhood.ViewModels
         private void OnLineReceived(object? sender, LineReceivedEventArgs e)
         {
             var logMessage = new StringBuilder($"{e.MessageType} {e.Message}");
+
+            if (e.MessageType.Equals("debugstr"))
+            {
+                const string marker = "string=";
+                var index = e.Message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                logMessage.Append(index == -1 ? $"{e.MessageType} {e.Message}" : e.Message[(index + marker.Length)..].Trim());
+            }
+            else
+            {
+                logMessage.Append($"{e.MessageType} {e.Message}");
+            }
+
             PdbProcess(logMessage, e.MessageType, e.Message);
             logMessage.AppendLine();
             DebugLog += logMessage.ToString();
@@ -176,7 +188,6 @@ namespace RXDKNeighborhood.ViewModels
             {
                 DebugLog = string.Empty;
             });
-
         }
     }
 }
