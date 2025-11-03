@@ -51,14 +51,21 @@ jobs:
     - name: Compress binaries
       run: 7z a ${{ github.workspace }}/${{ matrix.project }}-${{ matrix.os_flavor }}.${{ matrix.archive_ext }} ${{ github.workspace }}/artifacts/${{ matrix.project }}/${{ matrix.os_flavor }}-${{ matrix.arch }}/*
     
-    - name: Update latest tag to current commit
+    - name: Update or create 'latest' tag
       if: startsWith(github.ref, 'refs/heads/main')
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git fetch --tags
-        git tag -f latest
-        git push origin -f latest
+        if git rev-parse -q --verify refs/tags/latest >/dev/null; then
+          echo "Existing 'latest' tag found. Replacing it..."
+          git tag -d latest
+          git push origin :refs/tags/latest
+        else
+          echo "No existing 'latest' tag. Creating a new one..."
+        fi
+        git tag latest
+        git push origin latest
     
     - name: Create or Update Draft Release
       uses: softprops/action-gh-release@v2.3.2
