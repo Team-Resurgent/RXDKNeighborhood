@@ -9,6 +9,15 @@ public partial class DebugWindow : Window
     {
         InitializeComponent();
 
+        Opened += (sender, e) =>
+        {
+            if (DataContext is not DebugWindowViewModel vm)
+            {
+                return;
+            }
+            vm.Opened();
+        };
+
         Closing += (sender, e) => 
         {
             if (DataContext is not DebugWindowViewModel vm)

@@ -20,6 +20,7 @@
         <StackPanel DockPanel.Dock="Top" Margin="0,0,10,10" Orientation="Horizontal" Spacing="10">
             <Button IsVisible="{Binding ShowMenu}" ToolTip.Tip="Load Pdb" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xf720;" Command="{Binding LoadPdbCommand}"/>
             <Button ToolTip.Tip="Clear Log" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe872;" Command="{Binding ClearLogCommand}"/>
+            <Button IsEnabled="{Binding IsStopped}" ToolTip.Tip="Continue" Height="40" FontSize="20" FontWeight="Regular" FontFamily="{StaticResource MaterialSymbols}" VerticalContentAlignment="Center" Content="&#xe037;" Command="{Binding ContinueCommand}"/>
         </StackPanel>
         <Border BorderThickness="1" BorderBrush="Gray">
             <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">

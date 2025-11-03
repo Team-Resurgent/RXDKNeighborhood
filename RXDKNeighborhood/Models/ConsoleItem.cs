@@ -60,6 +60,7 @@ namespace RXDKNeighborhood.ViewModels
                     this.RaisePropertyChanged(nameof(CanDebug));
                     this.RaisePropertyChanged(nameof(CanDownload));
                     this.RaisePropertyChanged(nameof(CanLaunch));
+                    this.RaisePropertyChanged(nameof(CanLaunchWithDebug));
                     this.RaisePropertyChanged(nameof(CanRename));
                     this.RaisePropertyChanged(nameof(CanDelete));
                     this.RaisePropertyChanged(nameof(CanShowProperties));
@@ -113,6 +114,18 @@ namespace RXDKNeighborhood.ViewModels
             get
             {
                 return Type != ConsoleItemType.AddXbox;
+            }
+        }
+
+        public bool CanLaunchWithDebug
+        {
+            get
+            {
+                if (Type == ConsoleItemType.FileSystem && Value is FileSystemItem fileSystemItem)
+                {
+                    return fileSystemItem.CanLaunch;
+                }
+                return false;
             }
         }
 

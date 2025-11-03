@@ -529,7 +529,6 @@ namespace RXDKNeighborhood.ViewModels
             }
             var debugWindow = new DebugWindow();
             var debugWindowViewModel = new DebugWindowViewModel { Owner = debugWindow, IpAddress = ipAddress };
-            debugWindowViewModel.Start();
             debugWindow.DataContext = debugWindowViewModel;
             debugWindow.Show();
         }
@@ -701,6 +700,24 @@ namespace RXDKNeighborhood.ViewModels
                     await ShowAlert("Error", "Failed to connect to Xbox.");
                 }
             }
+        }
+
+        public void LaunchWithDebug(ConsoleItem item)
+        {
+            if (item.Value is not FileSystemItem fileSystemItem)
+            {
+                return;
+            }
+            if (Owner == null)
+            {
+                return;
+            }
+            CurrentPath.FormatXboxPath(out var ipAddress, out var _);
+            var xbePath = Path.Combine(fileSystemItem.Path, fileSystemItem.Name);
+            var debugWindow = new DebugWindow();
+            var debugWindowViewModel = new DebugWindowViewModel { Owner = debugWindow, IpAddress = ipAddress, XbePath = xbePath };
+            debugWindow.DataContext = debugWindowViewModel;
+            debugWindow.Show();
         }
 
         public async void CreateDirectory()

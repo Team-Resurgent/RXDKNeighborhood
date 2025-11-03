@@ -82,6 +82,7 @@
                                     <MenuItem IsVisible="{Binding CanDebug}" Header="Debug" Click="DebugXbox_Click"/>
 
                                     <MenuItem IsVisible="{Binding CanLaunch}" Header="Launch" Click="Launch_Click"/>
+                                    <MenuItem IsVisible="{Binding CanLaunchWithDebug}" Header="Launch with Debug" Click="LaunchWithDebug_Click"/>
                                     <MenuItem IsVisible="{Binding CanDownload}" Header="Download" Click="Download_Click"/>
                                     <MenuItem IsVisible="{Binding CanRename}" Header="Rename" Click="Rename_Click"/>
                                     <MenuItem IsVisible="{Binding CanDelete}" Header="Delete" Click="Delete_Click"/>

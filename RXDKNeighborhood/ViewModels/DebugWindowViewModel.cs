@@ -10,8 +10,6 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Linq;
-using Avalonia.Controls.Shapes;
-using System.IO;
 
 namespace RXDKNeighborhood.ViewModels
 {
@@ -19,6 +17,8 @@ namespace RXDKNeighborhood.ViewModels
     {
         private EchoServer? _echoServer;
         private uint _baseAddress;
+        private uint _addr;
+        private uint _thread;
         private int _port;
         private string? _pdbPath;
 
@@ -45,16 +45,98 @@ namespace RXDKNeighborhood.ViewModels
             set => this.RaiseAndSetIfChanged(ref _debugLog, value);
         }
 
+        private string _xbePath = "";
+        public string XbePath
+        {
+            get => _xbePath;
+            set => this.RaiseAndSetIfChanged(ref _xbePath, value);
+        }
+
+        private bool _isStopped;
+        public bool IsStopped
+        {
+            get => _isStopped;
+            set => this.RaiseAndSetIfChanged(ref _isStopped, value);
+        }
+
         public ICommand LoadPdbCommand { get; }
 
         public ICommand ClearLogCommand { get; }
 
+        public ICommand ContinueCommand { get; }
+
+        public async void Opened()
+        {
+            _port = 5005;
+
+            _echoServer = new EchoServer(_port);
+            _echoServer.LineReceived += OnLineReceived;
+            _echoServer.Start();
+
+            using var connection = new Connection();
+            if (await connection.OpenAsync(IpAddress) == false)
+            {
+                DebugLog += "Init failed.";
+                return;
+            }
+
+            bool launchWithDebug = !string.IsNullOrEmpty(_xbePath);
+
+            if (launchWithDebug)
+            {
+                var rebootResponseCode = await Reboot.SendAsync(connection, true, false, WaitType.Wait);
+                if (rebootResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Init failed.";
+                    return;
+                }
+            }
+
+            var notifyResponseCode = await NotifyAt.SendAsync(connection, _port, null, NotifyAtType.Debug);
+            if (notifyResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+            {
+                DebugLog += "Init failed.";
+                return;
+            }
+
+            if (launchWithDebug)
+            {
+                var isDebuggerResponseCode = await IsDebugger.SendAsync(connection);
+
+                var xbeDirectory = (System.IO.Path.GetDirectoryName(_xbePath)?.TrimEnd('\\') ?? string.Empty) + "\\";
+                var titleResponseCode = await RXDKXBDM.Commands.Title.SendAsync(connection, System.IO.Path.GetFileName(_xbePath), xbeDirectory, true);
+                if (titleResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Init failed.";
+                    return;
+                }
+                var debuggerResponseCode = await Debugger.SendAsync(connection, DebuggerType.Connect);
+                if (debuggerResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Init failed.";
+                    return;
+                }
+                var stopOnResponseCode = await StopOn.SendOptionsAsync(connection, false, false, true);
+                if (stopOnResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Init failed.";
+                    return;
+                }
+                var goResponseCode = await Go.SendAsync(connection);
+                if (goResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Init failed.";
+                    return;
+                }
+            }
+        }
+
         public async void Closing()
         {
-            using var _connection = new Connection();
-            if (await _connection.OpenAsync(IpAddress))
+            using var connection = new Connection();
+            if (await connection.OpenAsync(IpAddress))
             {
-                _ = NotifyAt.SendAsync(_connection, _port, null, NotifyAtType.Drop).Result;
+                _ = NotifyAt.SendAsync(connection, _port, null, NotifyAtType.Drop).Result;
             }
             _echoServer?.StopAsync();
         }
@@ -74,7 +156,7 @@ namespace RXDKNeighborhood.ViewModels
             return string.Empty;
         }
 
-        private void PdbProcess(StringBuilder logMessage, string messageType, string message)
+        private async void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -97,9 +179,29 @@ namespace RXDKNeighborhood.ViewModels
                 {
                     return;
                 }
-                if (uint.TryParse(paramDictionary["addr"], out var addr) || uint.TryParse(paramDictionary["address"], out addr))
+                if (uint.TryParse(paramDictionary["addr"], out _addr) || uint.TryParse(paramDictionary["address"], out _addr))
                 {
-                    logMessage.Append(AddressToLogMessage(addr));
+                    logMessage.Append(AddressToLogMessage(_addr));
+                }
+                if (keys.Contains("stop") && keys.Contains("thread"))
+                {
+                    using var connection = new Connection();
+                    if (await connection.OpenAsync(IpAddress))
+                    {
+                        _ = await NoStopOn.SendOptionsAsync(connection, false, false, true);
+                    }
+                    if (uint.TryParse(paramDictionary["thread"], out _thread))
+                    {
+                        IsStopped = true;
+                    }
+                }
+            }
+            else if (messageType.Equals("create") && keys.Contains("stop") && keys.Contains("thread"))
+            {
+                if (uint.TryParse(paramDictionary["thread"], out _thread))
+                {
+                    _addr = 0;
+                    IsStopped = true;
                 }
             }
             else if (messageType.Equals("debugstr"))
@@ -146,28 +248,6 @@ namespace RXDKNeighborhood.ViewModels
             });
         }
 
-        public async void Start()
-        {
-            _port = 5005;
-
-            _echoServer = new EchoServer(_port);
-            _echoServer.LineReceived += OnLineReceived;
-            _echoServer.Start();
-
-            using var _connection = new Connection();
-            if (await _connection.OpenAsync(IpAddress) == false)
-            {
-                DebugLog += "Failed to connect to Xbox!";
-                return;
-            }
-            var notifyResponseCode = NotifyAt.SendAsync(_connection, _port, null, NotifyAtType.Debug).Result;
-            if (notifyResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
-            {
-                DebugLog += "NotifyAt command failed, most likely hit max connections, warm reboot and try again.";
-                return;
-            }
-        }
-
         public DebugWindowViewModel()
         {
             LoadPdbCommand = ReactiveCommand.Create(async () =>
@@ -205,6 +285,30 @@ namespace RXDKNeighborhood.ViewModels
             ClearLogCommand = ReactiveCommand.Create(() =>
             {
                 DebugLog = string.Empty;
+            });
+
+            ContinueCommand = ReactiveCommand.Create(async () =>
+            {
+                using var connection = new Connection();
+                if (await connection.OpenAsync(IpAddress) == false)
+                {
+                    DebugLog += "Continue failed.";
+                    return;
+                }
+
+                var continueResponseCode = await Continue.SendAsync(connection, _thread, false);
+                if (continueResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Continue failed.";
+                    return;
+                }
+
+                var goResponseCode = await Go.SendAsync(connection);
+                if (goResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Continue failed.";
+                    return;
+                }
             });
         }
     }

@@ -304,6 +304,15 @@ namespace RXDKNeighborhood.Views
             vm.Launch(item);
         }
 
+        private void LaunchWithDebug_Click(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
+            {
+                return;
+            }
+            vm.LaunchWithDebug(item);
+        }
+
         private void Rename_Click(object? sender, RoutedEventArgs e)
         {
             if (sender is not MenuItem menuItem || menuItem.DataContext is not ConsoleItem item || DataContext is not MainWindowViewModel vm)
