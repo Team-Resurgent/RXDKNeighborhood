@@ -1,7 +1,9 @@
 ﻿using Dia2Lib;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace RXDKXBDM
 {
@@ -103,6 +105,33 @@ namespace RXDKXBDM
         public void ClosePdb()
         {
             Dispose();
+        }
+
+        public bool TryGetFilenames(out string[] filenames)
+        {
+            var filelist = new List<string>();
+
+            if (_diaSession != null)
+            {
+                _diaSession.getEnumTables(out var enumTables);
+                if (enumTables != null)
+                {
+                    foreach (IDiaTable table in enumTables)
+                    {
+                        if (table is IDiaEnumSourceFiles enumSourceFiles)
+                        {
+                            var sourceFileEnum = enumSourceFiles.GetEnumerator();
+                            while (sourceFileEnum.MoveNext())
+                            {
+                                var sourceFile = (IDiaSourceFile)sourceFileEnum.Current;
+                                filelist.Add(sourceFile.fileName);
+                            }
+                        }
+                    }
+                }
+            }
+            filenames = filelist.ToArray();
+            return false;
         }
 
         public bool TryGetRvaByFileLine(string filename, uint line, uint column, out uint rva)

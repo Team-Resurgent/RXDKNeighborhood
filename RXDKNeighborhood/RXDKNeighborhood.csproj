@@ -58,6 +58,9 @@
         <Compile Update="Views\ConfirmDialogWindow.axaml.cs">
             <DependentUpon>ConfirmDialogWindow.axaml</DependentUpon>
         </Compile>
+        <Compile Update="Views\BreakpointDialogWindow.axaml.cs">
+          <DependentUpon>BreakpointDialogWindow.axaml</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

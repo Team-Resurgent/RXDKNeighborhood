@@ -10,9 +10,18 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Linq;
+using RXDKNeighborhood.Models;
+using System.Collections.ObjectModel;
+using DynamicData;
 
 namespace RXDKNeighborhood.ViewModels
 {
+    public class Breakpoint
+    {
+        public required string File { get; set; }
+        public required uint Line { get; set; }
+    }
+
     public class DebugWindowViewModel : ViewModelBase<DebugWindow>
     {
         private EchoServer? _echoServer;
@@ -23,6 +32,8 @@ namespace RXDKNeighborhood.ViewModels
         private string? _pdbPath;
 
         public bool ShowMenu => OperatingSystem.IsWindows();
+
+        public ObservableCollection<Breakpoint> Breakpoints { get; } = [];
 
         private string _ipAddress = "";
         public string IpAddress
@@ -52,6 +63,13 @@ namespace RXDKNeighborhood.ViewModels
             set => this.RaiseAndSetIfChanged(ref _xbePath, value);
         }
 
+        private bool _pdbLoaded;
+        public bool PdbLoaded
+        {
+            get => _pdbLoaded;
+            set => this.RaiseAndSetIfChanged(ref _pdbLoaded, value);
+        }
+
         private bool _isStopped;
         public bool IsStopped
         {
@@ -64,6 +82,8 @@ namespace RXDKNeighborhood.ViewModels
         public ICommand ClearLogCommand { get; }
 
         public ICommand ContinueCommand { get; }
+
+        public ICommand AddBreakpointCommand { get; }
 
         public async void Opened()
         {
@@ -273,6 +293,7 @@ namespace RXDKNeighborhood.ViewModels
                     }
 
                     _pdbPath = files[0].Path.LocalPath;
+                    PdbLoaded = true;
 
                     Title = $"Debug Monitor - Using {System.IO.Path.GetFileName(_pdbPath)}";
                 }
@@ -311,6 +332,28 @@ namespace RXDKNeighborhood.ViewModels
                 }
 
                 IsStopped = false;
+            });
+
+            AddBreakpointCommand = ReactiveCommand.Create(async () =>
+            {
+                if (Owner == null || _pdbPath == null)
+                {
+                    return;
+                }
+                
+                using var pdb = new PdbParser();
+                pdb.LoadPdb(_pdbPath);
+                if (pdb.TryGetFilenames(out var filenames))
+                {
+                    return;
+                }
+
+                var breakpointDialogWindow = new BreakpointDialogWindow();
+                var breakpointDialogWindowViewModel = new BreakpointDialogWindowViewModel { Owner = breakpointDialogWindow, PdbPath = _pdbPath };
+                breakpointDialogWindowViewModel.Files.AddRange(filenames);
+                breakpointDialogWindow.DataContext = breakpointDialogWindowViewModel;
+                //inputDialogWindowViewModel.OnClosing += closingAction;
+                await breakpointDialogWindow.ShowDialog(Owner);
             });
         }
     }
