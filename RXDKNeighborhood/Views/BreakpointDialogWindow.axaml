@@ -3,11 +3,11 @@
         xmlns:vm="using:RXDKNeighborhood.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="400"
+        mc:Ignorable="d" d:DesignWidth="800"
         x:Class="RXDKNeighborhood.Views.BreakpointDialogWindow"
         x:DataType="vm:BreakpointDialogWindowViewModel"
-        Width="400"
-        CanResize="False"
+        Width="800"
+        CanResize="True"
         SizeToContent="Height"
         Icon="/Assets/icon.ico"
         Title="Breakpoint">
@@ -25,18 +25,18 @@
         </Style>
     </Window.Styles>
     <Border Padding="20">
-        <StackPanel Spacing="15">
-            <TextBlock Text="Please select file and line..." FontSize="16" FontWeight="Bold"/>
-            <TextBox Name="InputBox"
-                     Text="{Binding Input, Mode=TwoWay}"
-                     Watermark="Enter your input..."
-                     KeyDown="InputBox_KeyDown"/>
+        <StackPanel>
+            <StackPanel Spacing="10">
+                <TextBlock Text="File Filter:" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding FilterText, Mode=TwoWay}" Watermark="Type to filter files..."/>
+                <TextBlock Text="Files:" FontWeight="SemiBold"/>
+                <ListBox ItemsSource="{Binding FilteredFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}" BorderBrush="Gray" BorderThickness="1" Height="100"/>
+                <TextBlock Text="Line:" FontWeight="SemiBold"/>
+                <TextBox Text="{Binding Input, Mode=TwoWay}" />
+            </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                 <Button Content="Cancel" Width="80" Command="{Binding CloseCommand}"/>
-                <Button Content="OK" Width="80"
-                        IsDefault="True"
-                        IsEnabled="{Binding CanSubmit}"
-                        Command="{Binding OkCommand}"/>
+                <Button Content="OK" Width="80" IsEnabled="{Binding CanSubmit}" Command="{Binding OkCommand}"/>
             </StackPanel>
         </StackPanel>
     </Border>

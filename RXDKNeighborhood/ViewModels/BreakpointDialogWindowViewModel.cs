@@ -1,16 +1,35 @@
 ﻿using ReactiveUI;
 using RXDKNeighborhood.Views;
-using RXDKXBDM;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
-using Tmds.DBus.Protocol;
 
 namespace RXDKNeighborhood.ViewModels
 {
     public class BreakpointDialogWindowViewModel : ViewModelBase<BreakpointDialogWindow>
     {
         public ObservableCollection<string> Files { get; } = [];
+
+        private string _filterText = "";
+        public string FilterText
+        {
+            get => _filterText;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _filterText, value);
+                UpdateFilteredFiles();
+            }
+        }
+
+        public ObservableCollection<string> FilteredFiles { get; } = [];
+
+        private string? _selectedFile;
+        public string? SelectedFile
+        {
+            get => _selectedFile;
+            set => this.RaiseAndSetIfChanged(ref _selectedFile, value);
+        }
 
         private string _pdbPath = "";
         public string PdbPath
@@ -55,6 +74,24 @@ namespace RXDKNeighborhood.ViewModels
                 OnClosing?.Invoke(null);
                 Owner?.Close();
             });
+
+            // Set up collection change handling
+            Files.CollectionChanged += (s, e) => UpdateFilteredFiles();
+            UpdateFilteredFiles(); // Initialize filtered collection
+        }
+
+        private void UpdateFilteredFiles()
+        {
+            FilteredFiles.Clear();
+            
+            var filtered = string.IsNullOrWhiteSpace(FilterText) 
+                ? Files.ToList()
+                : Files.Where(file => file.Contains(FilterText, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (var file in filtered)
+            {
+                FilteredFiles.Add(file);
+            }
         }
     }
 }
