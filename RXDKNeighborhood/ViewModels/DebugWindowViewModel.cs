@@ -211,6 +211,23 @@ namespace RXDKNeighborhood.ViewModels
                     if (uint.TryParse(paramDictionary["thread"], out _thread))
                     {
                         IsStopped = true;
+                        if (!string.IsNullOrEmpty(_pdbPath))
+                        {
+                            var rva = _addr - _baseAddress;
+                            using var pdb = new PdbParser();
+                            pdb.LoadPdb(_pdbPath);
+                            if (pdb.TryGetSymbolsByRva(rva, _thread, out var variables))
+                            {
+                                logMessage.AppendLine();
+                                logMessage.Append("    Variables:");
+                                for (int i = 0; i < variables.Length; i++)
+                                {
+                                    var variable = variables[i];
+                                    logMessage.AppendLine();
+                                    logMessage.Append($"        {variable}: (contents coming soon)");
+                                }
+                            }
+                        }
                     }
                 }
             }

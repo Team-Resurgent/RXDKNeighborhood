@@ -346,6 +346,79 @@ namespace RXDKXBDM
             return type.name ?? "Unknown";
         }
 
+        public bool TryGetSymbolsByRva(uint addr, uint thread, out string[] variables)
+        {
+            var variableList = new List<string>();
+
+            if (_diaSession == null)
+            {
+                variables = variableList.ToArray();
+                return false;
+            }
+
+            _diaSession.findSymbolByRVA(addr, SymTagEnum.SymTagFunction, out var function);
+            function.findChildren(SymTagEnum.SymTagNull, null, (uint)NameSearchOptions.nsNone, out var symbols);
+
+            var symbolsEnum = symbols.GetEnumerator();
+            while (symbolsEnum.MoveNext())
+            {
+                var symbol = (IDiaSymbol)symbolsEnum.Current;
+                if (SymTagEnum.SymTagData == (SymTagEnum)symbol.symTag)
+                {
+                    switch ((LocationType)symbol.locationType)
+                    {
+                        case LocationType.LocIsRegRel:
+
+                            variableList.Add(symbol.name);
+
+                            //var type = GetDataSymbolType(symbol);
+                            //Console.WriteLine($"    {symbol.name}: {type} Size: {symbol.type.length}");
+                            //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}, Offset: {symbol.offset}");
+
+                            //var contextInfo = launcher.GetContextInfo(addr, thread);
+                            //if (contextInfo != null)
+                            //{
+                            //    //launcher.BaseAddress()
+                            //    var memdata = launcher.GetMem((uint)((contextInfo.Ebp + symbol.offset)), (uint)symbol.type.length);
+                            //    if (type.Equals("bool"))
+                            //    {
+                            //        Console.WriteLine($"    Contents: {(memdata[0] == 1 ? "true" : "false")}");
+                            //    }
+                            //    else if (type.Equals("char*"))
+                            //    {
+                            //        Console.Write("    Contents: ");
+                            //        uint value = BitConverter.ToUInt32(memdata, 0);
+                            //        var memdata2 = launcher.GetMem(value, 100);
+                            //        foreach (byte b in memdata2)
+                            //        {
+                            //            if (b == 0)
+                            //            {
+                            //                break;
+                            //            }
+                            //            Console.Write((char)b);
+                            //        }
+                            //        Console.WriteLine();
+                            //    }
+                            //    else
+                            //    {
+                            //        uint value = BitConverter.ToUInt32(memdata, 0);
+                            //        Console.WriteLine($"    Contents: Ptr(0x{value:x8})");
+                            //    }
+                            //}
+                            break;
+                        case LocationType.LocIsEnregistered:
+                            variableList.Add(symbol.name);
+                            //Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
+                            //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}");
+                            break;
+                    }
+                }
+            }
+            variables = variableList.ToArray();
+            return true;
+ 
+        }
+
         //public bool TryGetSymbolsByRva(uint addr, uint thread, Launcher launcher)
         //{
         //    Console.Clear();
