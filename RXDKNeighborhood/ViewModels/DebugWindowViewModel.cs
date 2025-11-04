@@ -10,7 +10,6 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Linq;
-using RXDKNeighborhood.Models;
 using System.Collections.ObjectModel;
 using DynamicData;
 
@@ -20,6 +19,8 @@ namespace RXDKNeighborhood.ViewModels
     {
         public required string File { get; set; }
         public required uint Line { get; set; }
+        public required uint VirtualAddress { get; set; }
+        public string VirtualAddressString => $"0x{VirtualAddress:X8}";
     }
 
     public class DebugWindowViewModel : ViewModelBase<DebugWindow>
@@ -205,11 +206,6 @@ namespace RXDKNeighborhood.ViewModels
                 }
                 if (keys.Contains("stop") && keys.Contains("thread"))
                 {
-                    using var connection = new Connection();
-                    if (await connection.OpenAsync(IpAddress))
-                    {
-                        _ = await NoStopOn.SendOptionsAsync(connection, false, false, true);
-                    }
                     if (uint.TryParse(paramDictionary["thread"], out _thread))
                     {
                         IsStopped = true;
@@ -220,6 +216,11 @@ namespace RXDKNeighborhood.ViewModels
             {
                 if (uint.TryParse(paramDictionary["thread"], out _thread))
                 {
+                    using var connection = new Connection();
+                    if (await connection.OpenAsync(IpAddress))
+                    {
+                        _ = await NoStopOn.SendOptionsAsync(connection, false, false, true);
+                    }
                     _addr = 0;
                     IsStopped = true;
                 }
@@ -352,9 +353,39 @@ namespace RXDKNeighborhood.ViewModels
                 var breakpointDialogWindowViewModel = new BreakpointDialogWindowViewModel { Owner = breakpointDialogWindow, PdbPath = _pdbPath };
                 breakpointDialogWindowViewModel.Files.AddRange(filenames);
                 breakpointDialogWindow.DataContext = breakpointDialogWindowViewModel;
-                //inputDialogWindowViewModel.OnClosing += closingAction;
+                breakpointDialogWindowViewModel.OnClosing += BreakpointDialogWindowViewModel_OnClosing;
                 await breakpointDialogWindow.ShowDialog(Owner);
             });
+        }
+
+        private async void BreakpointDialogWindowViewModel_OnClosing(string file, uint line)
+        {
+            if (_pdbPath == null)
+            {
+                return;
+            }
+
+            using var pdb = new PdbParser();
+            pdb.LoadPdb(_pdbPath);
+            if (pdb.TryGetRvaByFileLine(file, line, 0, out var rva))
+            {
+                using var connection = new Connection();
+                if (await connection.OpenAsync(IpAddress) == false)
+                {
+                    DebugLog += "Add breakpoint failed.";
+                    return;
+                }
+
+                uint virtualAddress = _baseAddress + rva;
+                var breakResponseCode = await Break.SendAddAsync(connection, virtualAddress);
+                if (breakResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Add breakpoint failed.";
+                    return;
+                }
+
+                Breakpoints.Add(new Breakpoint { File = file, Line = line, VirtualAddress = virtualAddress } );
+            }
         }
     }
 }

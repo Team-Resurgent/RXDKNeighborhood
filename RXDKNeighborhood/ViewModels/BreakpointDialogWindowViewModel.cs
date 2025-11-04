@@ -11,6 +11,8 @@ namespace RXDKNeighborhood.ViewModels
     {
         public ObservableCollection<string> Files { get; } = [];
 
+        public ObservableCollection<string> FilteredFiles { get; } = [];
+
         private string _filterText = "";
         public string FilterText
         {
@@ -22,13 +24,19 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
-        public ObservableCollection<string> FilteredFiles { get; } = [];
-
         private string? _selectedFile;
         public string? SelectedFile
         {
             get => _selectedFile;
-            set => this.RaiseAndSetIfChanged(ref _selectedFile, value);
+            set 
+            {
+                var changed = _selectedFile != value;
+                this.RaiseAndSetIfChanged(ref _selectedFile, value);
+                if (changed)
+                {
+                    this.RaisePropertyChanged(nameof(CanSubmit));
+                }
+            }
         }
 
         private string _pdbPath = "";
@@ -38,14 +46,14 @@ namespace RXDKNeighborhood.ViewModels
             set => this.RaiseAndSetIfChanged(ref _pdbPath, value);
         }
 
-        private string _input = "";
-        public string Input
+        private string _line = "";
+        public string Line
         {
-            get => _input;
+            get => _line;
             set
             {
-                var changed = _input != value;
-                this.RaiseAndSetIfChanged(ref _input, value);
+                var changed = _line != value;
+                this.RaiseAndSetIfChanged(ref _line, value);
                 if (changed)
                 {
                     this.RaisePropertyChanged(nameof(CanSubmit));
@@ -53,41 +61,52 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
+        public void LineChanging()
+        {
+            this.RaisePropertyChanged(nameof(CanSubmit));
+        }
+
         public ICommand OkCommand { get; }
 
         public ICommand CloseCommand { get; }
 
-        public bool CanSubmit => !string.IsNullOrWhiteSpace(Input);
+        public bool CanSubmit
+        {
+            get
+            {
+                bool canSubmit = uint.TryParse(Line, out _) && !string.IsNullOrEmpty(SelectedFile);
+                return canSubmit;
+            }
+        }
 
-        public event Action<string?>? OnClosing;
+        public event Action<string, uint>? OnClosing;
 
         public BreakpointDialogWindowViewModel()
         {
             OkCommand = ReactiveCommand.Create(() =>
             {
-                OnClosing?.Invoke(Input);
+                if (string.IsNullOrEmpty(SelectedFile) || !uint.TryParse(Line, out var line))
+                {
+                    return;
+                }
+                OnClosing?.Invoke(SelectedFile, line);
                 Owner?.Close();
             });
 
             CloseCommand = ReactiveCommand.Create(() =>
             {
-                OnClosing?.Invoke(null);
+                OnClosing?.Invoke("", 0);
                 Owner?.Close();
             });
 
-            // Set up collection change handling
             Files.CollectionChanged += (s, e) => UpdateFilteredFiles();
-            UpdateFilteredFiles(); // Initialize filtered collection
+            UpdateFilteredFiles();
         }
 
         private void UpdateFilteredFiles()
         {
             FilteredFiles.Clear();
-            
-            var filtered = string.IsNullOrWhiteSpace(FilterText) 
-                ? Files.ToList()
-                : Files.Where(file => file.Contains(FilterText, StringComparison.OrdinalIgnoreCase)).ToList();
-
+            var filtered = string.IsNullOrWhiteSpace(FilterText) ? Files.ToList() : Files.Where(file => file.Contains(FilterText, StringComparison.OrdinalIgnoreCase)).ToList();
             foreach (var file in filtered)
             {
                 FilteredFiles.Add(file);
@@ -95,12 +114,3 @@ namespace RXDKNeighborhood.ViewModels
         }
     }
 }
-
-
-//var rva = address - _baseAddress;
-//using var pdb = new PdbParser();
-//pdb.LoadPdb(_pdbPath);
-//if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
-//{
-//    return $" line={line} file={file}";
-//}

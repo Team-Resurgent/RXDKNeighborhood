@@ -30,6 +30,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Line" Binding="{Binding Line}" />
                     <DataGridTextColumn Header="File" Binding="{Binding File}" />
+                    <DataGridTextColumn Header="Virtual Address" Binding="{Binding VirtualAddressString}" />
                 </DataGrid.Columns>
             </DataGrid>
         </StackPanel>

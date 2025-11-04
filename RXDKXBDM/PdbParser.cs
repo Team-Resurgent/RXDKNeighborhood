@@ -138,7 +138,7 @@ namespace RXDKXBDM
         {
             if (_diaSession != null)
             {
-                _diaSession.findFile(null, filename, (uint)(NameSearchOptions.nsfCaseInsensitive | NameSearchOptions.nsfFNameExt), out var files);
+                _diaSession.findFile(null, filename, (uint)NameSearchOptions.nsfCaseInsensitive, out var files);
                 foreach (IDiaSourceFile file in files)
                 {
                     var compilandsEnum = file.compilands.GetEnumerator();

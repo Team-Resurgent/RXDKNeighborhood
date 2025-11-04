@@ -30,9 +30,9 @@
                 <TextBlock Text="File Filter:" FontWeight="SemiBold"/>
                 <TextBox Text="{Binding FilterText, Mode=TwoWay}" Watermark="Type to filter files..."/>
                 <TextBlock Text="Files:" FontWeight="SemiBold"/>
-                <ListBox ItemsSource="{Binding FilteredFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}" BorderBrush="Gray" BorderThickness="1" Height="100"/>
+                <ListBox ItemsSource="{Binding FilteredFiles}" SelectedItem="{Binding SelectedFile, Mode=TwoWay}" BorderBrush="Gray" BorderThickness="1" Height="200"/>
                 <TextBlock Text="Line:" FontWeight="SemiBold"/>
-                <TextBox Text="{Binding Input, Mode=TwoWay}" />
+                <TextBox x:Name="LineText" Text="{Binding Line, Mode=TwoWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                 <Button Content="Cancel" Width="80" Command="{Binding CloseCommand}"/>
