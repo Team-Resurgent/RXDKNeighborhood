@@ -374,6 +374,7 @@ namespace RXDKXBDM
                     {
                         case LocationType.LocIsRegRel:
                             {
+
                                 var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
                                 variableList.Add(symbolInfo);
 
@@ -415,8 +416,8 @@ namespace RXDKXBDM
                             break;
                         case LocationType.LocIsEnregistered:
                             {
-                                var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
-                                variableList.Add(symbolInfo);
+                                //var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
+                                //variableList.Add(symbolInfo);
                                 //Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
                                 //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}");
                             }
