@@ -1,12 +1,15 @@
 ﻿using Dia2Lib;
-using System.Data.Common;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 
 namespace RXDKXBDM
 {
+    public class SymbolInfo
+    {
+        public required string Type;
+        public required string Name;
+    }
+
     public class PdbParser : IDisposable
     {
         IDiaDataSource? _diaSource;
@@ -346,9 +349,11 @@ namespace RXDKXBDM
             return type.name ?? "Unknown";
         }
 
-        public bool TryGetSymbolsByRva(uint addr, uint thread, out string[] variables)
+
+
+        public bool TryGetSymbolsByRva(uint addr, uint thread, out SymbolInfo[] variables)
         {
-            var variableList = new List<string>();
+            var variableList = new List<SymbolInfo>();
 
             if (_diaSession == null)
             {
@@ -368,48 +373,53 @@ namespace RXDKXBDM
                     switch ((LocationType)symbol.locationType)
                     {
                         case LocationType.LocIsRegRel:
+                            {
+                                var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
+                                variableList.Add(symbolInfo);
 
-                            variableList.Add(symbol.name);
+                                //var type = GetDataSymbolType(symbol);
+                                //Console.WriteLine($"    {symbol.name}: {type} Size: {symbol.type.length}");
+                                //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}, Offset: {symbol.offset}");
 
-                            //var type = GetDataSymbolType(symbol);
-                            //Console.WriteLine($"    {symbol.name}: {type} Size: {symbol.type.length}");
-                            //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}, Offset: {symbol.offset}");
-
-                            //var contextInfo = launcher.GetContextInfo(addr, thread);
-                            //if (contextInfo != null)
-                            //{
-                            //    //launcher.BaseAddress()
-                            //    var memdata = launcher.GetMem((uint)((contextInfo.Ebp + symbol.offset)), (uint)symbol.type.length);
-                            //    if (type.Equals("bool"))
-                            //    {
-                            //        Console.WriteLine($"    Contents: {(memdata[0] == 1 ? "true" : "false")}");
-                            //    }
-                            //    else if (type.Equals("char*"))
-                            //    {
-                            //        Console.Write("    Contents: ");
-                            //        uint value = BitConverter.ToUInt32(memdata, 0);
-                            //        var memdata2 = launcher.GetMem(value, 100);
-                            //        foreach (byte b in memdata2)
-                            //        {
-                            //            if (b == 0)
-                            //            {
-                            //                break;
-                            //            }
-                            //            Console.Write((char)b);
-                            //        }
-                            //        Console.WriteLine();
-                            //    }
-                            //    else
-                            //    {
-                            //        uint value = BitConverter.ToUInt32(memdata, 0);
-                            //        Console.WriteLine($"    Contents: Ptr(0x{value:x8})");
-                            //    }
-                            //}
+                                //var contextInfo = launcher.GetContextInfo(addr, thread);
+                                //if (contextInfo != null)
+                                //{
+                                //    //launcher.BaseAddress()
+                                //    var memdata = launcher.GetMem((uint)((contextInfo.Ebp + symbol.offset)), (uint)symbol.type.length);
+                                //    if (type.Equals("bool"))
+                                //    {
+                                //        Console.WriteLine($"    Contents: {(memdata[0] == 1 ? "true" : "false")}");
+                                //    }
+                                //    else if (type.Equals("char*"))
+                                //    {
+                                //        Console.Write("    Contents: ");
+                                //        uint value = BitConverter.ToUInt32(memdata, 0);
+                                //        var memdata2 = launcher.GetMem(value, 100);
+                                //        foreach (byte b in memdata2)
+                                //        {
+                                //            if (b == 0)
+                                //            {
+                                //                break;
+                                //            }
+                                //            Console.Write((char)b);
+                                //        }
+                                //        Console.WriteLine();
+                                //    }
+                                //    else
+                                //    {
+                                //        uint value = BitConverter.ToUInt32(memdata, 0);
+                                //        Console.WriteLine($"    Contents: Ptr(0x{value:x8})");
+                                //    }
+                                //}
+                            }
                             break;
                         case LocationType.LocIsEnregistered:
-                            variableList.Add(symbol.name);
-                            //Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
-                            //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}");
+                            {
+                                var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
+                                variableList.Add(symbolInfo);
+                                //Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
+                                //Console.WriteLine($"    Register: {GetRegisterName(symbol.registerId)}");
+                            }
                             break;
                     }
                 }

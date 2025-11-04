@@ -216,15 +216,15 @@ namespace RXDKNeighborhood.ViewModels
                             var rva = _addr - _baseAddress;
                             using var pdb = new PdbParser();
                             pdb.LoadPdb(_pdbPath);
-                            if (pdb.TryGetSymbolsByRva(rva, _thread, out var variables))
+                            if (pdb.TryGetSymbolsByRva(rva, _thread, out var symbols))
                             {
                                 logMessage.AppendLine();
                                 logMessage.Append("    Variables:");
-                                for (int i = 0; i < variables.Length; i++)
+                                for (int i = 0; i < symbols.Length; i++)
                                 {
-                                    var variable = variables[i];
+                                    var symbol = symbols[i];
                                     logMessage.AppendLine();
-                                    logMessage.Append($"        {variable}: (contents coming soon)");
+                                    logMessage.Append($"        {symbol.Type} {symbol.Name}: (contents coming soon)");
                                 }
                             }
                         }
