@@ -86,6 +86,8 @@ namespace RXDKNeighborhood.ViewModels
 
         public ICommand AddBreakpointCommand { get; }
 
+        public ICommand RemoveBreakpointCommand { get; }
+
         public async void Opened()
         {
             _port = 5005;
@@ -355,6 +357,25 @@ namespace RXDKNeighborhood.ViewModels
                 breakpointDialogWindow.DataContext = breakpointDialogWindowViewModel;
                 breakpointDialogWindowViewModel.OnClosing += BreakpointDialogWindowViewModel_OnClosing;
                 await breakpointDialogWindow.ShowDialog(Owner);
+            });
+
+            RemoveBreakpointCommand = ReactiveCommand.Create<Breakpoint>(async (breakpoint) =>
+            {
+                using var connection = new Connection();
+                if (await connection.OpenAsync(IpAddress) == false)
+                {
+                    DebugLog += "Remove breakpoint failed.\n";
+                    return;
+                }
+
+                var removeResponseCode = await Break.SendRemoveAsync(connection, breakpoint.VirtualAddress);
+                if (removeResponseCode.ResponseCode != ResponseCode.SUCCESS_OK)
+                {
+                    DebugLog += "Remove breakpoint failed.\n";
+                    return;
+                }
+
+                Breakpoints.Remove(breakpoint);
             });
         }
 
