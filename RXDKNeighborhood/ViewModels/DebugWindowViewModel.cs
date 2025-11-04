@@ -12,6 +12,9 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.Collections.ObjectModel;
 using DynamicData;
+using System.Collections.Generic;
+using System.Threading;
+using static Avalonia.OpenGL.GlInterface;
 
 namespace RXDKNeighborhood.ViewModels
 {
@@ -216,15 +219,55 @@ namespace RXDKNeighborhood.ViewModels
                             var rva = _addr - _baseAddress;
                             using var pdb = new PdbParser();
                             pdb.LoadPdb(_pdbPath);
-                            if (pdb.TryGetSymbolsByRva(rva, _thread, out var symbols))
+                            if (pdb.TryGetSymbolsByRva(rva, out var variables))
                             {
+                                using var connection = new Connection();
+                                if (!await connection.OpenAsync(IpAddress))
+                                {
+                                    return;
+                                }
+                                var contextResponseCode = await GetContext.SendAsync(connection, _thread, true, true, false, true);
+                                if (contextResponseCode.ResponseCode != ResponseCode.SUCCESS_OK || contextResponseCode.ResponseValue == null)
+                                {
+                                    return;
+                                }
+
                                 logMessage.AppendLine();
                                 logMessage.Append("    Variables:");
-                                for (int i = 0; i < symbols.Length; i++)
+                                for (int i = 0; i < variables.Length; i++)
                                 {
-                                    var symbol = symbols[i];
+                                    var variable = variables[i];
                                     logMessage.AppendLine();
-                                    logMessage.Append($"        {symbol.Type} {symbol.Name}: (contents coming soon)");
+                                    var typeInfo = variable.Type;
+                                    if (typeInfo != null && typeInfo.IsValid)
+                                    {
+                                        if (!variable.Register.Equals("VFRAME"))
+                                        {
+                                            continue;
+                                        }
+
+                                        var sizeInfo = typeInfo.Size > 0 ? $" (size: {typeInfo.Size} bytes)" : "";
+                                        var arrayInfo = typeInfo.IsArray ? $" [elements: {typeInfo.ElementCount}, element size: {typeInfo.ElementSize}]" : "";
+                                        var flags = new List<string>();
+                                        if (typeInfo.IsPointer) flags.Add("pointer");
+                                        if (typeInfo.IsArray) flags.Add("array");
+                                        if (typeInfo.IsStruct) flags.Add("struct");
+                                        if (typeInfo.IsEnum) flags.Add("enum");
+                                        var flagInfo = flags.Count > 0 ? $" [{string.Join(", ", flags)}]" : "";
+
+                                        if (!typeInfo.IsPointer && !typeInfo.IsArray && !typeInfo.IsStruct && !typeInfo.IsEnum)
+                                        {
+                                            var memdata = await GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size);
+                                            // convert to type and display, i.e. uint32, int32, int16, bool 
+                                            logMessage.Append($"        {typeInfo.TypeName} {variable.Name}{sizeInfo}{arrayInfo}{flagInfo}: (contents coming soon)");
+                                        }
+                                    }
+                                    //else
+                                    //{
+                                    //    logMessage.Append($"        Unknown {variable.Name}: Currently unsupported");
+                                    //    logMessage.AppendLine();
+                                    //    logMessage.Append($"        Reg: {variable.Register} Offset: {variable.Offset}");
+                                    //}
                                 }
                             }
                         }

@@ -4,10 +4,39 @@ using System.Runtime.InteropServices;
 
 namespace RXDKXBDM
 {
+    public class DetailedTypeInfo
+    {
+        public string TypeName { get; set; } = "Unknown";
+        public uint Size { get; set; } = 0;
+        public bool IsPointer { get; set; } = false;
+        public bool IsArray { get; set; } = false;
+        public bool IsStruct { get; set; } = false;
+        public bool IsEnum { get; set; } = false;
+        public bool IsBasicType { get; set; } = false;
+        public uint ElementSize { get; set; } = 0;  // For arrays - size of each element
+        public uint ElementCount { get; set; } = 0; // For arrays - number of elements
+        public DetailedTypeInfo? BaseType { get; set; } = null; // For pointers and arrays - what they point to/contain
+        public bool IsValid { get; set; } = true; // False if type couldn't be resolved
+
+        public override string ToString()
+        {
+            if (!IsValid) return "Invalid Type";
+            
+            var result = TypeName;
+            if (Size > 0) result += $" (size: {Size})";
+            if (IsArray && ElementCount > 0) result += $" [count: {ElementCount}]";
+            if (IsPointer && BaseType != null) result += $" -> {BaseType.TypeName}";
+            
+            return result;
+        }
+    }
+
     public class SymbolInfo
     {
-        public required string Type;
+        public required DetailedTypeInfo? Type;
         public required string Name;
+        public required string Register;
+        public required long Offset;
     }
 
     public class PdbParser : IDisposable
@@ -282,19 +311,22 @@ namespace RXDKXBDM
             }
         }
 
-        public static string GetDataSymbolType(IDiaSymbol symbol)
+        public static DetailedTypeInfo GetDataSymbolType(IDiaSymbol symbol)
         {
-            if (symbol == null) return "Unknown";
+            if (symbol == null) 
+                return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
 
             IDiaSymbol type = symbol.type;
-            if (type == null) return "Unknown";
+            if (type == null) 
+                return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
 
             return ResolveType(type);
         }
 
-        private static string ResolveType(IDiaSymbol type)
+        private static DetailedTypeInfo ResolveType(IDiaSymbol type)
         {
-            if (type == null) return "Unknown";
+            if (type == null) 
+                return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
 
             var symTag = (SymTagEnum)type.symTag;
 
@@ -302,56 +334,130 @@ namespace RXDKXBDM
             while (symTag == SymTagEnum.SymTagTypedef)
             {
                 type = type.type;
-                if (type == null) return "Unknown";
+                if (type == null) 
+                    return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
+                symTag = (SymTagEnum)type.symTag;
             }
+
+            var result = new DetailedTypeInfo();
 
             // Pointers
             if (symTag == SymTagEnum.SymTagPointerType)
             {
+                result.IsPointer = true;
+                result.Size = (uint)type.length; // Pointer size (usually 4 or 8 bytes)
+                
                 IDiaSymbol targetType = type.type;
-                string targetName = ResolveType(targetType);
-                return targetName + "*";
+                if (targetType != null)
+                {
+                    result.BaseType = ResolveType(targetType);
+                    result.TypeName = result.BaseType.TypeName + "*";
+                }
+                else
+                {
+                    result.TypeName = "void*";
+                }
+                return result;
             }
 
             // Arrays
             if (symTag == SymTagEnum.SymTagArrayType)
             {
+                result.IsArray = true;
+                result.Size = (uint)type.length; // Total array size
+                
                 IDiaSymbol elementType = type.type;
-                string elementName = ResolveType(elementType);
-                return elementName + "[]";
+                if (elementType != null)
+                {
+                    result.BaseType = ResolveType(elementType);
+                    result.ElementSize = result.BaseType.Size;
+                    result.ElementCount = result.Size / result.ElementSize;
+                    result.TypeName = result.BaseType.TypeName + "[]";
+                }
+                else
+                {
+                    result.TypeName = "Unknown[]";
+                    result.IsValid = false;
+                }
+                return result;
             }
 
             // Base types
             if (symTag == SymTagEnum.SymTagBaseType)
             {
+                result.IsBasicType = true;
+                result.Size = (uint)type.length;
+                
                 switch (type.baseType)
                 {
-                    case 0x1: return "void";
-                    case 0x2: return "char";
-                    case 0x3: return "wchar";
-                    case 0x6: return $"int{type.length * 8}_t";
-                    case 0x7: return $"uint{type.length * 8}_t";
-                    case 0x8: return type.length == 4 ? "float" : type.length == 8 ? "double" : "float(?)";
-                    case 0xA: return "bool";
-                    case 0xD: return $"int{type.length * 8}_t";
-                    case 0xE: return $"uint{type.length * 8}_t";
-                    default: return $"Unknown";
+                    case 0x1: 
+                        result.TypeName = "void";
+                        result.Size = 0; // void has no size
+                        break;
+                    case 0x2: 
+                        result.TypeName = "char";
+                        break;
+                    case 0x3: 
+                        result.TypeName = "wchar";
+                        break;
+                    case 0x6: 
+                        result.TypeName = $"int{type.length * 8}_t";
+                        break;
+                    case 0x7: 
+                        result.TypeName = $"uint{type.length * 8}_t";
+                        break;
+                    case 0x8: 
+                        result.TypeName = type.length == 4 ? "float" : type.length == 8 ? "double" : "float(?)";
+                        break;
+                    case 0xA: 
+                        result.TypeName = "bool";
+                        break;
+                    case 0xD: 
+                        result.TypeName = $"int{type.length * 8}_t";
+                        break;
+                    case 0xE: 
+                        result.TypeName = $"uint{type.length * 8}_t";
+                        break;
+                    default: 
+                        result.TypeName = "Unknown";
+                        result.IsValid = false;
+                        break;
                 }
+                return result;
             }
 
-            // User-defined types
+            // User-defined types (structs, classes)
             if (symTag == SymTagEnum.SymTagUDT)
-                return $"struct {type.name}";
+            {
+                result.IsStruct = true;
+                result.Size = (uint)type.length;
+                result.TypeName = $"struct {type.name ?? "Unknown"}";
+                return result;
+            }
 
+            // Enums
             if (symTag == SymTagEnum.SymTagEnum)
-                return $"enum {type.name}";
+            {
+                result.IsEnum = true;
+                result.Size = (uint)type.length;
+                result.TypeName = $"enum {type.name ?? "Unknown"}";
+                return result;
+            }
 
-            return type.name ?? "Unknown";
+            // Fallback for other types
+            result.TypeName = type.name ?? "Unknown";
+            result.Size = (uint)type.length;
+            if (string.IsNullOrEmpty(type.name))
+            {
+                result.IsValid = false;
+            }
+            
+            return result;
         }
 
 
 
-        public bool TryGetSymbolsByRva(uint addr, uint thread, out SymbolInfo[] variables)
+        public bool TryGetSymbolsByRva(uint addr, out SymbolInfo[] variables)
         {
             var variableList = new List<SymbolInfo>();
 
@@ -374,8 +480,7 @@ namespace RXDKXBDM
                     {
                         case LocationType.LocIsRegRel:
                             {
-
-                                var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
+                                var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name, Register = GetRegisterName(symbol.registerId), Offset = symbol.offset };
                                 variableList.Add(symbolInfo);
 
                                 //var type = GetDataSymbolType(symbol);
@@ -416,6 +521,7 @@ namespace RXDKXBDM
                             break;
                         case LocationType.LocIsEnregistered:
                             {
+                                int q = 1;
                                 //var symbolInfo = new SymbolInfo { Type = GetDataSymbolType(symbol), Name = symbol.name };
                                 //variableList.Add(symbolInfo);
                                 //Console.WriteLine($"    {symbol.name}: {GetDataSymbolType(symbol)} Size: {symbol.type.length}");
