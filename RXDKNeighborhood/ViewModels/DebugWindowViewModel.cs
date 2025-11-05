@@ -222,6 +222,48 @@ namespace RXDKNeighborhood.ViewModels
             return $"raw: {hex}";
         }
 
+        private string ConvertCharPointerToValue(Connection connection, byte[]? ptrData, RXDKXBDM.DetailedTypeInfo typeInfo)
+        {
+            if (ptrData == null || ptrData.Length < typeInfo.Size)
+                return "null";
+
+            try
+            {
+                // Get the pointer address (assuming 32-bit for Xbox)
+                uint stringAddress = BitConverter.ToUInt32(ptrData, 0);
+                
+                if (stringAddress == 0)
+                    return "null";
+
+                // Read up to 256 characters from the string address
+                var stringData = GetMem2.SendAsync(connection, stringAddress, 256).Result;
+                if (stringData.ResponseCode != ResponseCode.SUCCESS_OK || stringData.ResponseValue == null)
+                    return $"0x{stringAddress:X8} (read failed)";
+
+                // Find the null terminator
+                int nullIndex = Array.IndexOf(stringData.ResponseValue, (byte)0);
+                if (nullIndex == -1)
+                    nullIndex = Math.Min(stringData.ResponseValue.Length, 50); // Limit to 50 chars if no null found
+
+                // Convert to string
+                var chars = stringData.ResponseValue.Take(nullIndex).Select(b => (char)b);
+                var stringValue = new string(chars.ToArray());
+                
+                // Escape special characters for display
+                stringValue = stringValue.Replace("\\", "\\\\")
+                                       .Replace("\"", "\\\"")
+                                       .Replace("\n", "\\n")
+                                       .Replace("\r", "\\r")
+                                       .Replace("\t", "\\t");
+
+                return $"\"{stringValue}\" (0x{stringAddress:X8})";
+            }
+            catch (Exception ex)
+            {
+                return $"conversion error: {ex.Message}";
+            }
+        }
+
         private async void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -296,6 +338,12 @@ namespace RXDKNeighborhood.ViewModels
                                         {
                                             var memdata = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
                                             var value = ConvertMemoryDataToValue(memdata.ResponseValue, typeInfo);
+                                            logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
+                                        }
+                                        else if (typeInfo.IsPointer && typeInfo.TypeName.Equals("char*"))
+                                        {
+                                            var ptrData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
+                                            var value = ConvertCharPointerToValue(connection, ptrData.ResponseValue, typeInfo);
                                             logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
                                         }
                                     }
