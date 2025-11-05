@@ -289,21 +289,17 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
-        private string ConvertStructToValue(Connection connection, byte[]? structData, RXDKXBDM.DetailedTypeInfo typeInfo, StringBuilder logMessage, string indent = "            ")
+        private void ConvertStructMembersToValue(Connection connection, byte[] structData, RXDKXBDM.DetailedTypeInfo typeInfo, StringBuilder logMessage)
         {
-            if (structData == null || structData.Length < typeInfo.Size)
-                return "null";
-
             try
             {
                 if (typeInfo.StructMembers.Count == 0)
                 {
                     // No member info available, show raw hex data
                     var hex = string.Join(" ", structData.Take((int)typeInfo.Size).Select(b => $"{b:X2}"));
-                    return $"raw data: {hex}";
+                    logMessage.AppendLine($"            raw data: {hex}");
+                    return;
                 }
-
-                logMessage.AppendLine("{");
                 
                 foreach (var member in typeInfo.StructMembers)
                 {
@@ -332,15 +328,12 @@ namespace RXDKNeighborhood.ViewModels
                         memberValue = $"raw: {hex}";
                     }
 
-                    logMessage.AppendLine($"{indent}{member.Type.TypeName} {member.Name} = {memberValue}");
+                    logMessage.AppendLine($"            {member.Type.TypeName} {member.Name} = {memberValue}");
                 }
-
-                logMessage.Append($"{indent.Substring(4)}"); // Remove 4 spaces for closing brace
-                return ""; // Return empty since we're appending directly to logMessage
             }
             catch (Exception ex)
             {
-                return $"conversion error: {ex.Message}";
+                logMessage.AppendLine($"            conversion error: {ex.Message}");
             }
         }
 
@@ -435,12 +428,18 @@ namespace RXDKNeighborhood.ViewModels
                                         else if (typeInfo.IsStruct)
                                         {
                                             var structData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
-                                            logMessage.Append($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = ");
-                                            var value = ConvertStructToValue(connection, structData.ResponseValue, typeInfo, logMessage);
-                                            if (!string.IsNullOrEmpty(value))
+                                            logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {{");
+                                            
+                                            if (structData.ResponseCode == ResponseCode.SUCCESS_OK && structData.ResponseValue != null)
                                             {
-                                                logMessage.AppendLine(value);
+                                                ConvertStructMembersToValue(connection, structData.ResponseValue, typeInfo, logMessage);
                                             }
+                                            else
+                                            {
+                                                logMessage.AppendLine("            (failed to read struct data)");
+                                            }
+                                            
+                                            logMessage.AppendLine("        }");
                                         }
                                     }
                                     //else
