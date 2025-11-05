@@ -289,6 +289,61 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
+        private string ConvertStructToValue(Connection connection, byte[]? structData, RXDKXBDM.DetailedTypeInfo typeInfo, StringBuilder logMessage, string indent = "            ")
+        {
+            if (structData == null || structData.Length < typeInfo.Size)
+                return "null";
+
+            try
+            {
+                if (typeInfo.StructMembers.Count == 0)
+                {
+                    // No member info available, show raw hex data
+                    var hex = string.Join(" ", structData.Take((int)typeInfo.Size).Select(b => $"{b:X2}"));
+                    return $"raw data: {hex}";
+                }
+
+                logMessage.AppendLine("{");
+                
+                foreach (var member in typeInfo.StructMembers)
+                {
+                    if (member.Offset + member.Size > structData.Length)
+                        continue; // Skip members that would read beyond available data
+
+                    var memberData = structData.Skip((int)member.Offset).Take((int)member.Size).ToArray();
+                    string memberValue;
+
+                    if (member.Type.IsBasicType && !member.Type.IsPointer && !member.Type.IsArray)
+                    {
+                        memberValue = ConvertMemoryDataToValue(memberData, member.Type);
+                    }
+                    else if (member.Type.IsEnum)
+                    {
+                        memberValue = ConvertEnumToValue(memberData, member.Type);
+                    }
+                    else if (member.Type.IsPointer && member.Type.TypeName.Equals("char*"))
+                    {
+                        memberValue = ConvertCharPointerToValue(connection, memberData, member.Type);
+                    }
+                    else
+                    {
+                        // For complex types, show raw hex for now
+                        var hex = string.Join(" ", memberData.Select(b => $"{b:X2}"));
+                        memberValue = $"raw: {hex}";
+                    }
+
+                    logMessage.AppendLine($"{indent}{member.Type.TypeName} {member.Name} = {memberValue}");
+                }
+
+                logMessage.Append($"{indent.Substring(4)}"); // Remove 4 spaces for closing brace
+                return ""; // Return empty since we're appending directly to logMessage
+            }
+            catch (Exception ex)
+            {
+                return $"conversion error: {ex.Message}";
+            }
+        }
+
         private async void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -376,6 +431,16 @@ namespace RXDKNeighborhood.ViewModels
                                             var enumData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
                                             var value = ConvertEnumToValue(enumData.ResponseValue, typeInfo);
                                             logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
+                                        }
+                                        else if (typeInfo.IsStruct)
+                                        {
+                                            var structData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
+                                            logMessage.Append($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = ");
+                                            var value = ConvertStructToValue(connection, structData.ResponseValue, typeInfo, logMessage);
+                                            if (!string.IsNullOrEmpty(value))
+                                            {
+                                                logMessage.AppendLine(value);
+                                            }
                                         }
                                     }
                                     //else

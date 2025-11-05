@@ -4,6 +4,14 @@ using System.Runtime.InteropServices;
 
 namespace RXDKXBDM
 {
+    public class StructMember
+    {
+        public string Name { get; set; } = "";
+        public DetailedTypeInfo Type { get; set; } = new();
+        public uint Offset { get; set; } = 0;
+        public uint Size { get; set; } = 0;
+    }
+
     public class DetailedTypeInfo
     {
         public string TypeName { get; set; } = "Unknown";
@@ -16,6 +24,7 @@ namespace RXDKXBDM
         public uint ElementSize { get; set; } = 0;  // For arrays - size of each element
         public uint ElementCount { get; set; } = 0; // For arrays - number of elements
         public DetailedTypeInfo? BaseType { get; set; } = null; // For pointers and arrays - what they point to/contain
+        public List<StructMember> StructMembers { get; set; } = new(); // For structs - list of members
         public bool IsValid { get; set; } = true; // False if type couldn't be resolved
 
         public override string ToString()
@@ -26,6 +35,7 @@ namespace RXDKXBDM
             if (Size > 0) result += $" (size: {Size})";
             if (IsArray && ElementCount > 0) result += $" [count: {ElementCount}]";
             if (IsPointer && BaseType != null) result += $" -> {BaseType.TypeName}";
+            if (IsStruct && StructMembers.Count > 0) result += $" [{StructMembers.Count} members]";
             
             return result;
         }
@@ -432,6 +442,7 @@ namespace RXDKXBDM
                 result.IsStruct = true;
                 result.Size = (uint)type.length;
                 result.TypeName = $"struct {type.name ?? "Unknown"}";
+                result.StructMembers = GetStructMembers(type);
                 return result;
             }
 
@@ -455,7 +466,39 @@ namespace RXDKXBDM
             return result;
         }
 
+        private static List<StructMember> GetStructMembers(IDiaSymbol structSymbol)
+        {
+            var members = new List<StructMember>();
+            
+            try
+            {
+                structSymbol.findChildren(SymTagEnum.SymTagData, null, 0, out var childSymbols);
+                if (childSymbols == null) return members;
 
+                var childEnum = childSymbols.GetEnumerator();
+                while (childEnum.MoveNext())
+                {
+                    var memberSymbol = (IDiaSymbol)childEnum.Current;
+                    
+                    var member = new StructMember
+                    {
+                        Name = memberSymbol.name ?? "Unknown",
+                        Offset = (uint)memberSymbol.offset,
+                        Type = ResolveType(memberSymbol.type),
+                        Size = (uint)(memberSymbol.type?.length ?? 0)
+                    };
+                    
+                    members.Add(member);
+                }
+            }
+            catch (Exception)
+            {
+                // If we can't get struct members, return empty list
+                // This allows the struct to still be displayed with basic info
+            }
+
+            return members;
+        }
 
         public bool TryGetSymbolsByRva(uint addr, out SymbolInfo[] variables)
         {
