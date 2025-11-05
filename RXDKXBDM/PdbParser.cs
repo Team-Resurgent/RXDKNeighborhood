@@ -330,13 +330,22 @@ namespace RXDKXBDM
             if (type == null) 
                 return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
 
-            return ResolveType(type);
+            return ResolveType(type, 0);
         }
 
-        private static DetailedTypeInfo ResolveType(IDiaSymbol type)
+        private static DetailedTypeInfo ResolveType(IDiaSymbol type, int depth = 0)
         {
             if (type == null) 
                 return new DetailedTypeInfo { TypeName = "Unknown", IsValid = false };
+
+            // Prevent infinite recursion by limiting depth
+            if (depth > 5)
+                return new DetailedTypeInfo 
+                { 
+                    TypeName = type.name ?? "Unknown", 
+                    Size = (uint)type.length, 
+                    IsValid = true 
+                };
 
             var symTag = (SymTagEnum)type.symTag;
 
@@ -360,7 +369,7 @@ namespace RXDKXBDM
                 IDiaSymbol targetType = type.type;
                 if (targetType != null)
                 {
-                    result.BaseType = ResolveType(targetType);
+                    result.BaseType = ResolveType(targetType, depth + 1);
                     result.TypeName = result.BaseType.TypeName + "*";
                 }
                 else
@@ -379,7 +388,7 @@ namespace RXDKXBDM
                 IDiaSymbol elementType = type.type;
                 if (elementType != null)
                 {
-                    result.BaseType = ResolveType(elementType);
+                    result.BaseType = ResolveType(elementType, depth + 1);
                     result.ElementSize = result.BaseType.Size;
                     result.ElementCount = result.Size / result.ElementSize;
                     result.TypeName = result.BaseType.TypeName + "[]";
@@ -442,7 +451,13 @@ namespace RXDKXBDM
                 result.IsStruct = true;
                 result.Size = (uint)type.length;
                 result.TypeName = $"struct {type.name ?? "Unknown"}";
-                result.StructMembers = GetStructMembers(type);
+                
+                // Only get struct members if we haven't gone too deep to prevent recursion
+                if (depth < 3)
+                {
+                    result.StructMembers = GetStructMembers(type, depth + 1);
+                }
+                
                 return result;
             }
 
@@ -466,7 +481,7 @@ namespace RXDKXBDM
             return result;
         }
 
-        private static List<StructMember> GetStructMembers(IDiaSymbol structSymbol)
+        private static List<StructMember> GetStructMembers(IDiaSymbol structSymbol, int depth = 0)
         {
             var members = new List<StructMember>();
             
@@ -484,7 +499,7 @@ namespace RXDKXBDM
                     {
                         Name = memberSymbol.name ?? "Unknown",
                         Offset = (uint)memberSymbol.offset,
-                        Type = ResolveType(memberSymbol.type),
+                        Type = ResolveType(memberSymbol.type, depth),
                         Size = (uint)(memberSymbol.type?.length ?? 0)
                     };
                     
