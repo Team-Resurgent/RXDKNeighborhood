@@ -264,6 +264,31 @@ namespace RXDKNeighborhood.ViewModels
             }
         }
 
+        private string ConvertEnumToValue(byte[]? enumData, RXDKXBDM.DetailedTypeInfo typeInfo)
+        {
+            if (enumData == null || enumData.Length < typeInfo.Size)
+                return "null";
+
+            try
+            {
+                // Convert based on enum size (underlying type)
+                string underlyingValue = typeInfo.Size switch
+                {
+                    1 => ((sbyte)enumData[0]).ToString(), // byte enum
+                    2 => BitConverter.ToInt16(enumData, 0).ToString(), // short enum
+                    4 => BitConverter.ToInt32(enumData, 0).ToString(), // int enum (most common)
+                    8 => BitConverter.ToInt64(enumData, 0).ToString(), // long enum
+                    _ => $"unsupported size {typeInfo.Size}"
+                };
+
+                return $"{underlyingValue}";
+            }
+            catch (Exception ex)
+            {
+                return $"conversion error: {ex.Message}";
+            }
+        }
+
         private async void PdbProcess(StringBuilder logMessage, string messageType, string message)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -344,6 +369,12 @@ namespace RXDKNeighborhood.ViewModels
                                         {
                                             var ptrData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
                                             var value = ConvertCharPointerToValue(connection, ptrData.ResponseValue, typeInfo);
+                                            logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
+                                        }
+                                        else if (typeInfo.IsEnum)
+                                        {
+                                            var enumData = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
+                                            var value = ConvertEnumToValue(enumData.ResponseValue, typeInfo);
                                             logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
                                         }
                                     }
