@@ -13,8 +13,6 @@ using System.Linq;
 using System.Collections.ObjectModel;
 using DynamicData;
 using System.Collections.Generic;
-using System.Threading;
-using static Avalonia.OpenGL.GlInterface;
 
 namespace RXDKNeighborhood.ViewModels
 {
@@ -167,19 +165,61 @@ namespace RXDKNeighborhood.ViewModels
             _echoServer?.StopAsync();
         }
 
-        private string AddressToLogMessage(uint address)
+        private void AddressToLogMessage(StringBuilder logMessage, uint address)
         {
-            if (!string.IsNullOrEmpty(_pdbPath))
+            if (string.IsNullOrEmpty(_pdbPath))
             {
-                var rva = address - _baseAddress;
-                using var pdb = new PdbParser();
-                pdb.LoadPdb(_pdbPath);
-                if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
-                {
-                    return $" line={line} file={file}";
-                }
+                return;
             }
-            return string.Empty;
+            var rva = address - _baseAddress;
+            using var pdb = new PdbParser();
+            pdb.LoadPdb(_pdbPath);
+            if (pdb.TryGetFileLineByRva(rva, out string file, out var line, out var col))
+            {
+                logMessage.AppendLine($"    Line={line}, File='{file}'");
+            }
+        }
+
+        private string ConvertMemoryDataToValue(byte[]? memData, RXDKXBDM.DetailedTypeInfo typeInfo)
+        {
+            if (memData == null || memData.Length == 0)
+                return "null";
+
+            if (memData.Length < typeInfo.Size)
+                return "insufficient data";
+
+            try
+            {
+                return typeInfo.TypeName.ToLower() switch
+                {
+                    "bool" => memData[0] != 0 ? "true" : "false",
+                    "char" => $"'{(char)memData[0]}' (0x{memData[0]:X2})",
+                    "wchar" => BitConverter.ToUInt16(memData, 0).ToString(),
+                    "int8" => ((sbyte)memData[0]).ToString(),
+                    "uint8" => memData[0].ToString(),
+                    "int16" => BitConverter.ToInt16(memData, 0).ToString(),
+                    "uint16" => BitConverter.ToUInt16(memData, 0).ToString(),
+                    "int32" => BitConverter.ToInt32(memData, 0).ToString(),
+                    "uint32" => BitConverter.ToUInt32(memData, 0).ToString(),
+                    "int64" => BitConverter.ToInt64(memData, 0).ToString(),
+                    "uint64" => BitConverter.ToUInt64(memData, 0).ToString(),
+                    "float" => BitConverter.ToSingle(memData, 0).ToString("F6"),
+                    "double" => BitConverter.ToDouble(memData, 0).ToString("F15"),
+                    "void" => "void",
+                    _ => ConvertUnknownType(memData, typeInfo)
+                };
+            }
+            catch (Exception ex)
+            {
+                return $"conversion error: {ex.Message}";
+            }
+        }
+
+        private string ConvertUnknownType(byte[] memData, RXDKXBDM.DetailedTypeInfo typeInfo)
+        {
+            // For unknown types, show raw hex data
+            var hex = string.Join(" ", memData.Take((int)typeInfo.Size).Select(b => $"{b:X2}"));
+            return $"raw: {hex}";
         }
 
         private async void PdbProcess(StringBuilder logMessage, string messageType, string message)
@@ -207,7 +247,7 @@ namespace RXDKNeighborhood.ViewModels
                 }
                 if (uint.TryParse(paramDictionary["addr"], out _addr) || uint.TryParse(paramDictionary["address"], out _addr))
                 {
-                    logMessage.Append(AddressToLogMessage(_addr));
+                    AddressToLogMessage(logMessage, _addr);
                 }
                 if (keys.Contains("stop") && keys.Contains("thread"))
                 {
@@ -222,22 +262,20 @@ namespace RXDKNeighborhood.ViewModels
                             if (pdb.TryGetSymbolsByRva(rva, out var variables))
                             {
                                 using var connection = new Connection();
-                                if (!await connection.OpenAsync(IpAddress))
+                                if (!connection.OpenAsync(IpAddress).Result)
                                 {
                                     return;
                                 }
-                                var contextResponseCode = await GetContext.SendAsync(connection, _thread, true, true, false, true);
+                                var contextResponseCode = GetContext.SendAsync(connection, _thread, true, true, false, true).Result;
                                 if (contextResponseCode.ResponseCode != ResponseCode.SUCCESS_OK || contextResponseCode.ResponseValue == null)
                                 {
                                     return;
                                 }
 
-                                logMessage.AppendLine();
-                                logMessage.Append("    Variables:");
+                                logMessage.AppendLine("    Variables:");
                                 for (int i = 0; i < variables.Length; i++)
                                 {
                                     var variable = variables[i];
-                                    logMessage.AppendLine();
                                     var typeInfo = variable.Type;
                                     if (typeInfo != null && typeInfo.IsValid)
                                     {
@@ -246,20 +284,19 @@ namespace RXDKNeighborhood.ViewModels
                                             continue;
                                         }
 
-                                        var sizeInfo = typeInfo.Size > 0 ? $" (size: {typeInfo.Size} bytes)" : "";
-                                        var arrayInfo = typeInfo.IsArray ? $" [elements: {typeInfo.ElementCount}, element size: {typeInfo.ElementSize}]" : "";
+                                        var arrayInfo = typeInfo.IsArray ? $" [{typeInfo.ElementCount}]" : "";
                                         var flags = new List<string>();
                                         if (typeInfo.IsPointer) flags.Add("pointer");
                                         if (typeInfo.IsArray) flags.Add("array");
                                         if (typeInfo.IsStruct) flags.Add("struct");
                                         if (typeInfo.IsEnum) flags.Add("enum");
-                                        var flagInfo = flags.Count > 0 ? $" [{string.Join(", ", flags)}]" : "";
+                                        //var flagInfo = flags.Count > 0 ? $" [{string.Join(", ", flags)}]" : "";
 
                                         if (!typeInfo.IsPointer && !typeInfo.IsArray && !typeInfo.IsStruct && !typeInfo.IsEnum)
                                         {
-                                            var memdata = await GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size);
-                                            // convert to type and display, i.e. uint32, int32, int16, bool 
-                                            logMessage.Append($"        {typeInfo.TypeName} {variable.Name}{sizeInfo}{arrayInfo}{flagInfo}: (contents coming soon)");
+                                            var memdata = GetMem2.SendAsync(connection, (uint)(contextResponseCode.ResponseValue.Ebp + variable.Offset), typeInfo.Size).Result;
+                                            var value = ConvertMemoryDataToValue(memdata.ResponseValue, typeInfo);
+                                            logMessage.AppendLine($"        {typeInfo.TypeName} {variable.Name}{arrayInfo} = {value}");
                                         }
                                     }
                                     //else
@@ -293,7 +330,7 @@ namespace RXDKNeighborhood.ViewModels
                 {
                     if (uint.TryParse(keys[6], NumberStyles.HexNumber, null, out var addr))
                     {
-                        logMessage.Append(AddressToLogMessage(addr));
+                        AddressToLogMessage(logMessage, addr);
                     }
                 }
             }
@@ -307,7 +344,7 @@ namespace RXDKNeighborhood.ViewModels
             {
                 const string marker = "string=";
                 var index = e.Message.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-                logMessage.Append(index == -1 ? $"{e.MessageType} {e.Message}" : e.Message[(index + marker.Length)..].Trim());
+                logMessage.AppendLine(index == -1 ? $"{e.MessageType} {e.Message}" : e.Message[(index + marker.Length)..].Trim());
             }
             else if (e.MessageType.Equals("hello"))
             {
@@ -315,18 +352,13 @@ namespace RXDKNeighborhood.ViewModels
             }
             else
             {
-                logMessage.Append($"{e.MessageType} {e.Message}");
+                logMessage.AppendLine($"{e.MessageType} {e.Message}");
             }
 
             PdbProcess(logMessage, e.MessageType, e.Message);
 
-            if (logMessage.Length > 0)
-            {
-                logMessage.AppendLine();
+            Dispatcher.UIThread.Invoke(() => {
                 DebugLog += logMessage.ToString();
-            }
-
-            Dispatcher.UIThread.Invoke(() => { 
                 Owner?.LogScrollViewer.ScrollToEnd();
             });
         }

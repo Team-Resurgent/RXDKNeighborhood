@@ -401,10 +401,10 @@ namespace RXDKXBDM
                         result.TypeName = "wchar";
                         break;
                     case 0x6: 
-                        result.TypeName = $"int{type.length * 8}_t";
+                        result.TypeName = $"int{type.length * 8}";
                         break;
                     case 0x7: 
-                        result.TypeName = $"uint{type.length * 8}_t";
+                        result.TypeName = $"uint{type.length * 8}";
                         break;
                     case 0x8: 
                         result.TypeName = type.length == 4 ? "float" : type.length == 8 ? "double" : "float(?)";
@@ -413,10 +413,10 @@ namespace RXDKXBDM
                         result.TypeName = "bool";
                         break;
                     case 0xD: 
-                        result.TypeName = $"int{type.length * 8}_t";
+                        result.TypeName = $"int{type.length * 8}";
                         break;
                     case 0xE: 
-                        result.TypeName = $"uint{type.length * 8}_t";
+                        result.TypeName = $"uint{type.length * 8}";
                         break;
                     default: 
                         result.TypeName = "Unknown";
